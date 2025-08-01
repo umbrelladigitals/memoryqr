@@ -1,0 +1,30 @@
+{
+  "inputs": {
+    "figma-token": {
+      "type": "promptString",
+      "id": "figma-token",
+      "description": "Figma API Key",
+      "password": true
+    }
+  },
+  "servers": {
+    "context7": {
+      "type": "stdio",
+      "command": "/usr/bin/npm",
+      "args": ["exec", "-y", "@upstash/context7-mcp"]
+    },
+    "filesystem": {
+      "type": "stdio", 
+      "command": "/usr/bin/npm",
+      "args": ["exec", "-y", "@modelcontextprotocol/server-filesystem", "${workspaceFolder}"]
+    },
+    "figma": {
+      "type": "stdio",
+      "command": "/usr/bin/npm",
+      "args": ["exec", "-y", "mcp-figma"],
+      "env": {
+        "FIGMA_ACCESS_TOKEN": "${input:figma-token}"
+      }
+    }
+  }
+}
