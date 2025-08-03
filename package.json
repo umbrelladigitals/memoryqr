@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "r2:test": "tsx scripts/test-r2-connection.ts",
+    "r2:simple": "tsx scripts/simple-r2-test.ts",
+    "r2:migrate": "tsx scripts/migrate-to-r2.ts",
+    "r2:cors": "tsx scripts/setup-r2-cors.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
@@ -30,6 +34,7 @@
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dotenv": "^17.2.1",
     "jose": "^6.0.12",
     "lucide-react": "^0.525.0",
     "nanoid": "^5.1.5",

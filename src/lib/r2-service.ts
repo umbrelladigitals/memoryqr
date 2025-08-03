@@ -1,14 +1,43 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 
-// R2 Client Configuration
-const r2Client = new S3Client({
-  region: 'auto',
-  endpoint: process.env.CLOUDFLARE_R2_ENDPOINT,
-  credentials: {
-    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY!,
-  },
-})
+// Get R2 configuration from environment
+function getR2Config() {
+  const config = {
+    bucketName: process.env.CLOUDFLARE_R2_BUCKET_NAME,
+    endpoint: process.env.CLOUDFLARE_R2_ENDPOINT,
+    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
+    publicUrl: process.env.CLOUDFLARE_R2_PUBLIC_URL,
+  }
+  
+  // Validate required environment variables
+  if (!config.bucketName || !config.endpoint || !config.accessKeyId || !config.secretAccessKey) {
+    console.error('Missing R2 configuration:', {
+      bucketName: !!config.bucketName,
+      endpoint: !!config.endpoint,
+      accessKeyId: !!config.accessKeyId,
+      secretAccessKey: !!config.secretAccessKey,
+    })
+    throw new Error('Cloudflare R2 configuration is incomplete')
+  }
+  
+  return config
+}
+
+// Create R2 client dynamically
+function createR2Client() {
+  const config = getR2Config()
+  
+  return new S3Client({
+    region: 'auto',
+    endpoint: config.endpoint,
+    credentials: {
+      accessKeyId: config.accessKeyId!,
+      secretAccessKey: config.secretAccessKey!,
+    },
+    forcePathStyle: true,
+  })
+}
 
 export interface UploadOptions {
   customerId: string
@@ -27,11 +56,13 @@ export interface CloudflareR2Service {
 // Strategy 1: Single Bucket with Customer/Event Structure
 export const r2Service: CloudflareR2Service = {
   async uploadFile({ customerId, eventId, fileName, fileBuffer, contentType }: UploadOptions): Promise<string> {
+    const config = getR2Config()
+    const r2Client = createR2Client()
     const key = `${customerId}/${eventId}/${fileName}`
     
     try {
       const command = new PutObjectCommand({
-        Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME!,
+        Bucket: config.bucketName,
         Key: key,
         Body: fileBuffer,
         ContentType: contentType,
@@ -52,9 +83,12 @@ export const r2Service: CloudflareR2Service = {
   },
 
   async deleteFile(filePath: string): Promise<void> {
+    const config = getR2Config()
+    const r2Client = createR2Client()
+    
     try {
       const command = new DeleteObjectCommand({
-        Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME!,
+        Bucket: config.bucketName,
         Key: filePath,
       })
 
@@ -66,19 +100,22 @@ export const r2Service: CloudflareR2Service = {
   },
 
   getFileUrl(filePath: string): string {
+    const config = getR2Config()
+    
     // With custom domain
-    if (process.env.CLOUDFLARE_R2_PUBLIC_URL) {
-      return `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${filePath}`
+    if (config.publicUrl) {
+      return `${config.publicUrl}/${filePath}`
     }
     
     // Direct R2 URL (fallback)
-    return `${process.env.CLOUDFLARE_R2_ENDPOINT}/${process.env.CLOUDFLARE_R2_BUCKET_NAME}/${filePath}`
+    return `${config.endpoint}/${config.bucketName}/${filePath}`
   },
 }
 
 // Alternative Strategy 2: Per-Customer Buckets
 export const r2PerCustomerService: CloudflareR2Service = {
   async uploadFile({ customerId, eventId, fileName, fileBuffer, contentType }: UploadOptions): Promise<string> {
+    const r2Client = createR2Client()
     const bucketName = `memoryqr-${customerId.toLowerCase()}`
     const key = `${eventId}/${fileName}`
     
@@ -102,6 +139,7 @@ export const r2PerCustomerService: CloudflareR2Service = {
   },
 
   async deleteFile(filePath: string): Promise<void> {
+    const r2Client = createR2Client()
     const [bucketName, ...keyParts] = filePath.split('/')
     const key = keyParts.join('/')
     
@@ -119,6 +157,7 @@ export const r2PerCustomerService: CloudflareR2Service = {
   },
 
   getFileUrl(filePath: string): string {
-    return `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${filePath}`
+    const config = getR2Config()
+    return `${config.publicUrl}/${filePath}`
   },
 }
