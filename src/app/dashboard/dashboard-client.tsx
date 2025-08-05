@@ -1,53 +1,36 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { signOut } from 'next-auth/react'
-import { toast } from 'sonner'
-import Link from 'next            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              Genel Bakış
-            </TabsTrigger>
-            <TabsTrigger value="events" className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Etkinlikler
-            </TabsTrigger>
-            <TabsTrigger value="plan" className="flex items-center gap-2">
-              <Crown className="w-4 h-4" />
-              Plan & Özellikler
-            </TabsTrigger>Button } from '@/components/ui/button'
+import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Progress } from '@/components/ui/progress'
 import { 
-  QrCode, 
   Plus, 
+  QrCode, 
   Calendar, 
-  Image, 
   Users, 
-  Settings, 
-  LogOut,
-  Eye,
-  Download,
-  BarChart3,
+  BarChart3, 
+  Settings,
   Crown,
-  Palette
+  Camera,
+  Download,
+  Eye
 } from 'lucide-react'
-import CreateEventDialog from '@/components/create-event-dialog'
-import DashboardStats from '@/components/dashboard/DashboardStats'
-import PlanFeatures from '@/components/dashboard/PlanFeatures'
-import PlansComparison from '@/components/dashboard/PlansComparison'
+import Link from 'next/link'
 
 interface Event {
   id: string
   title: string
-  description: string | null
+  description?: string
   date: Date
-  location: string | null
+  location?: string
   isActive: boolean
   qrCode: string
-  uploads: { id: string }[]
-  createdAt: Date
+  _count: {
+    uploads: number
+  }
 }
 
 interface Customer {
@@ -55,382 +38,273 @@ interface Customer {
   name: string
   email: string
   plan: {
-    id: string
     name: string
     displayName: string
-    description?: string
-    price: number
-    currency?: string
     maxEvents: number | null
     maxPhotosPerEvent: number | null
-    maxStorageGB: number | null
-    customDomain: boolean
-    analytics: boolean
-    prioritySupport: boolean
-    apiAccess: boolean
-    whitelabel: boolean
-    isActive: boolean
-    isPopular: boolean
-    features?: string[]
   } | null
 }
 
-interface DashboardStats {
-  totalEvents: number
-  activeEvents: number
-  totalPhotos: number
-  totalViews: number
-  thisMonthEvents: number
-  thisMonthPhotos: number
-  storageUsedGB: number
-  planLimit: {
-    events: number | null
-    storage: number | null
-  }
-}
+export default function DashboardClient() {
+  const { data: session } = useSession()
+  const [events, setEvents] = useState<Event[]>([])
+  const [customer, setCustomer] = useState<Customer | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-interface DashboardClientProps {
-  events: Event[]
-  customer: Customer | null
-  userId: string
-  stats: DashboardStats
-  allPlans: any[]
-}
+  // Müşteri bilgilerini ve etkinlikleri yükle
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true)
+        
+        // Müşteri bilgilerini al
+        const customerResponse = await fetch('/api/customer/profile')
+        if (customerResponse.ok) {
+          const customerData = await customerResponse.json()
+          setCustomer(customerData)
+        }
 
-export default function DashboardClient({ events, customer, userId, stats, allPlans }: DashboardClientProps) {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState('overview')
-  const [isUpgrading, setIsUpgrading] = useState(false)
-  const router = useRouter()
-
-  const handleSignOut = async () => {
-    await signOut({ redirect: true, callbackUrl: '/' })
-  }
-
-  const handlePlanUpgrade = async (planId: string) => {
-    if (isUpgrading) return
-    
-    try {
-      setIsUpgrading(true)
-      
-      const response = await fetch('/api/plans/upgrade', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ planId }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Plan yükseltme başarısız')
+        // Etkinlikleri al
+        const eventsResponse = await fetch('/api/events')
+        if (eventsResponse.ok) {
+          const eventsData = await eventsResponse.json()
+          setEvents(eventsData)
+        }
+      } catch (error) {
+        console.error('Dashboard data loading error:', error)
+      } finally {
+        setIsLoading(false)
       }
-
-      toast.success('Plan başarıyla yükseltildi!', {
-        description: 'Yeni özellikleriniz şimdi kullanılabilir.',
-      })
-      
-      // Refresh the page to get updated customer data
-      router.refresh()
-      
-    } catch (error) {
-      console.error('Plan upgrade error:', error)
-      toast.error(error instanceof Error ? error.message : 'Plan yükseltme başarısız')
-    } finally {
-      setIsUpgrading(false)
     }
-  }
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('tr-TR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
-  }
-
-  const getPlanBadge = (planName: string) => {
-    const colors = {
-      FREE: 'bg-gray-100 text-gray-800',
-      PRO: 'bg-blue-100 text-blue-800',
-      ENTERPRISE: 'bg-purple-100 text-purple-800'
+    if (session?.user) {
+      loadData()
     }
-    return colors[planName as keyof typeof colors] || colors.FREE
+  }, [session])
+
+  // Plan istatistikleri
+  const planStats = customer?.plan ? {
+    usedEvents: events.length,
+    maxEvents: customer.plan.maxEvents,
+    totalUploads: events.reduce((sum, event) => sum + event._count.uploads, 0),
+    maxPhotosPerEvent: customer.plan.maxPhotosPerEvent
+  } : null
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <Link href="/" className="flex items-center space-x-2">
-              <QrCode className="h-8 w-8 text-blue-600" />
-              <span className="text-xl font-bold">MemoryQR</span>
-            </Link>
-            <Badge className={getPlanBadge(customer?.plan?.name || 'FREE')}>
-              {customer?.plan?.displayName || 'FREE'}
-            </Badge>
-            {customer?.plan?.name === 'ENTERPRISE' && (
-              <Crown className="h-5 w-5 text-purple-600" />
-            )}
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">
-              Hoş geldiniz, {customer?.name}
-            </span>
-            <Button variant="ghost" size="sm">
-              <Settings className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
+    <div className="space-y-8">
+      {/* Hoş geldin mesajı */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Hoş geldin, {session?.user?.name || 'Kullanıcı'}!
+          </h1>
+          <p className="text-muted-foreground">
+            QR kod ile etkinlik fotoğraf paylaşım sisteminizi yönetin
+          </p>
         </div>
-      </header>
-
-      <div className="p-6 max-w-7xl mx-auto">
-        {/* Navigation Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Genel Bakış
-            </TabsTrigger>
-            <TabsTrigger value="events" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Etkinlikler
-            </TabsTrigger>
-            <TabsTrigger value="templates" className="flex items-center gap-2">
-              <Palette className="h-4 w-4" />
-              Şablonlar
-            </TabsTrigger>
-            <TabsTrigger value="plan" className="flex items-center gap-2">
-              <Crown className="h-4 w-4" />
-              Plan Detayları
-            </TabsTrigger>
-            <TabsTrigger value="upgrade" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Plan Yükseltme
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <DashboardStats stats={stats} />
-          </TabsContent>
-
-          {/* Events Tab */}
-          <TabsContent value="events" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Etkinliklerim</h2>
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Yeni Etkinlik
-              </Button>
-            </div>
-
-            {events.length === 0 ? (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Henüz etkinlik yok</h3>
-                  <p className="text-gray-600 mb-4">
-                    İlk etkinliğinizi oluşturun ve QR kod ile fotoğraf toplamaya başlayın.
-                  </p>
-                  <Button onClick={() => setIsCreateDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    İlk Etkinliğimi Oluştur
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {events.map((event) => (
-                  <Card key={event.id} className="hover:shadow-md transition-shadow">
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-lg">{event.title}</CardTitle>
-                          <CardDescription>
-                            {formatDate(event.date)}
-                          </CardDescription>
-                        </div>
-                        <Badge variant={event.isActive ? 'default' : 'secondary'}>
-                          {event.isActive ? 'Aktif' : 'Pasif'}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {event.location && (
-                          <p className="text-sm text-gray-600">{event.location}</p>
-                        )}
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="flex items-center">
-                            <Image className="h-4 w-4 mr-1" />
-                            {event.uploads.length} fotoğraf
-                          </span>
-                          <span className="text-gray-500">
-                            {formatDate(event.createdAt)}
-                          </span>
-                        </div>
-                        <div className="flex space-x-2 pt-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="flex-1"
-                            onClick={() => router.push(`/dashboard/events/${event.id}`)}
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            Görüntüle
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => router.push(`/dashboard/templates?eventId=${event.id}`)}
-                          >
-                            <Palette className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => router.push(`/dashboard/events/${event.id}/qr`)}
-                          >
-                            <QrCode className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          {/* Templates Tab */}
-          <TabsContent value="templates" className="space-y-6">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full mx-auto flex items-center justify-center">
-                  <Palette className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    Şablon Yönetimi
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    Etkinlikleriniz için özel yükleme sayfası şablonları oluşturun ve özelleştirin
-                  </p>
-                  <Link href="/dashboard/templates">
-                    <Button className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700">
-                      <Palette className="w-4 h-4 mr-2" />
-                      Şablonları Yönet
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              <Card className="border-rose-200 bg-rose-50">
-                <CardHeader className="text-center">
-                  <div className="w-12 h-12 bg-rose-500 rounded-lg mx-auto mb-3 flex items-center justify-center">
-                    <Image className="w-6 h-6 text-white" />
-                  </div>
-                  <CardTitle className="text-rose-900">Düğün Şablonu</CardTitle>
-                  <CardDescription className="text-rose-700">
-                    Romantik ve zarif tasarım
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex space-x-2 mb-3">
-                    <div className="w-4 h-4 rounded-full bg-rose-400"></div>
-                    <div className="w-4 h-4 rounded-full bg-amber-400"></div>
-                    <div className="w-4 h-4 rounded-full bg-pink-300"></div>
-                  </div>
-                  <p className="text-sm text-rose-700">
-                    Özel gününüz için romantik tema
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-violet-200 bg-violet-50">
-                <CardHeader className="text-center">
-                  <div className="w-12 h-12 bg-violet-500 rounded-lg mx-auto mb-3 flex items-center justify-center">
-                    <Calendar className="w-6 h-6 text-white" />
-                  </div>
-                  <CardTitle className="text-violet-900">Doğum Günü Şablonu</CardTitle>
-                  <CardDescription className="text-violet-700">
-                    Neşeli ve canlı tasarım
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex space-x-2 mb-3">
-                    <div className="w-4 h-4 rounded-full bg-violet-400"></div>
-                    <div className="w-4 h-4 rounded-full bg-cyan-400"></div>
-                    <div className="w-4 h-4 rounded-full bg-yellow-400"></div>
-                  </div>
-                  <p className="text-sm text-violet-700">
-                    Kutlamalar için eğlenceli tema
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-blue-200 bg-blue-50">
-                <CardHeader className="text-center">
-                  <div className="w-12 h-12 bg-blue-500 rounded-lg mx-auto mb-3 flex items-center justify-center">
-                    <Users className="w-6 h-6 text-white" />
-                  </div>
-                  <CardTitle className="text-blue-900">Kurumsal Şablon</CardTitle>
-                  <CardDescription className="text-blue-700">
-                    Profesyonel ve modern tasarım
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex space-x-2 mb-3">
-                    <div className="w-4 h-4 rounded-full bg-blue-500"></div>
-                    <div className="w-4 h-4 rounded-full bg-indigo-500"></div>
-                    <div className="w-4 h-4 rounded-full bg-gray-400"></div>
-                  </div>
-                  <p className="text-sm text-blue-700">
-                    İş etkinlikleri için profesyonel tema
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Plan Details Tab */}
-          <TabsContent value="plan" className="space-y-6">
-            <PlanFeatures 
-              currentPlan={customer?.plan || null}
-              usage={{
-                eventsUsed: stats.totalEvents,
-                photosUsed: stats.totalPhotos,
-                storageUsedGB: stats.storageUsedGB
-              }}
-            />
-          </TabsContent>
-
-          {/* Plan Upgrade Tab */}
-          <TabsContent value="upgrade" className="space-y-6">
-            <PlansComparison 
-              plans={allPlans}
-              currentPlan={customer?.plan || undefined}
-              onUpgrade={handlePlanUpgrade}
-              isLoading={isUpgrading}
-            />
-          </TabsContent>
-        </Tabs>
+        <div className="flex items-center gap-4">
+          {customer?.plan && (
+            <Badge variant="outline" className="px-3 py-1">
+              <Crown className="w-4 h-4 mr-1" />
+              {customer.plan.displayName}
+            </Badge>
+          )}
+          <Button asChild>
+            <Link href="/dashboard/events/new">
+              <Plus className="w-4 h-4 mr-2" />
+              Yeni Etkinlik
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      <CreateEventDialog
-        isOpen={isCreateDialogOpen}
-        onClose={() => setIsCreateDialogOpen(false)}
-        customerId={userId}
-      />
+      {/* İstatistikler */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Toplam Etkinlik
+            </CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{events.length}</div>
+            <p className="text-xs text-muted-foreground">
+              {customer?.plan?.maxEvents ? `${customer.plan.maxEvents} etkinlik limiti` : 'Sınırsız'}
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Toplam Fotoğraf
+            </CardTitle>
+            <Camera className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {events.reduce((sum, event) => sum + event._count.uploads, 0)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Yüklenen fotoğraflar
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Aktif Etkinlik
+            </CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {events.filter(e => e.isActive).length}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Şu anda aktif
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Plan
+            </CardTitle>
+            <Crown className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {customer?.plan?.displayName || 'N/A'}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Mevcut planınız
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Plan kullanımı */}
+      {planStats && customer?.plan?.maxEvents && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Plan Kullanımı</CardTitle>
+            <CardDescription>
+              Mevcut planınızın kullanım durumu
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span>Etkinlik Kullanımı</span>
+                <span>{planStats.usedEvents} / {customer.plan.maxEvents}</span>
+              </div>
+              <Progress 
+                value={(planStats.usedEvents / customer.plan.maxEvents) * 100} 
+                className="h-2"
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Etkinlikler */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Calendar className="w-5 h-5 mr-2" />
+            Etkinliklerim
+          </CardTitle>
+          <CardDescription>
+            Oluşturduğunuz etkinlikleri görüntüleyin ve yönetin
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {events.length === 0 ? (
+            <div className="text-center py-12">
+              <QrCode className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">
+                Henüz etkinlik oluşturmadınız
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                İlk etkinliğinizi oluşturun ve misafirlerinizin fotoğraf paylaşmasını sağlayın
+              </p>
+              <Button asChild>
+                <Link href="/dashboard/events/new">
+                  <Plus className="w-4 h-4 mr-2" />
+                  İlk Etkinliğimi Oluştur
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {events.map((event) => (
+                <Card key={event.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-lg leading-tight">
+                        {event.title}
+                      </CardTitle>
+                      <Badge 
+                        variant={event.isActive ? 'default' : 'secondary'}
+                        className="text-xs"
+                      >
+                        {event.isActive ? 'Aktif' : 'Pasif'}
+                      </Badge>
+                    </div>
+                    {event.description && (
+                      <CardDescription className="line-clamp-2">
+                        {event.description}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-3">
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        {new Date(event.date).toLocaleDateString('tr-TR')}
+                      </div>
+                      
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <Camera className="w-4 h-4 mr-2" />
+                        {event._count.uploads} fotoğraf yüklendi
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <Button asChild size="sm" variant="outline" className="flex-1">
+                          <Link href={`/dashboard/events/${event.id}`}>
+                            <Eye className="w-4 h-4 mr-1" />
+                            Görüntüle
+                          </Link>
+                        </Button>
+                        <Button asChild size="sm" variant="outline" className="flex-1">
+                          <Link href={`/dashboard/events/${event.id}/qr`}>
+                            <QrCode className="w-4 h-4 mr-1" />
+                            QR Kod
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* TODO: Etkinlik oluşturma dialog'u eklenecek */}
     </div>
   )
 }

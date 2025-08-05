@@ -13,16 +13,16 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { eventId } = params
+    const { eventId } = await params
 
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: {
-        template: true,
         customer: {
           select: {
             id: true,
-            name: true
+            name: true,
+            email: true
           }
         }
       }
@@ -61,9 +61,9 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { eventId } = params
+    const { eventId } = await params
     const body = await request.json()
-    const { templateId, customColors, customLogo, customStyles, userId } = body
+    const { templateId, customColors, customLogo, customBanner } = body
 
     // Verify event exists and user owns it
     const event = await prisma.event.findUnique({
@@ -85,14 +85,85 @@ export async function PUT(
     const updatedEvent = await prisma.event.update({
       where: { id: eventId },
       data: {
-        templateId,
+        selectedTemplate: templateId || null,
         customColors: customColors || null,
         customLogo: customLogo || null,
-        customStyles: customStyles || null,
+        bannerImage: customBanner || null,
         updatedAt: new Date()
       },
       include: {
-        template: true
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    })
+
+    return NextResponse.json({ 
+      event: updatedEvent,
+      success: true 
+    })
+  } catch (error) {
+    console.error('Update event template error:', error)
+    return NextResponse.json(
+      { error: 'Şablon uygulanamadı' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { eventId: string } }
+) {
+  try {
+    const session = await auth()
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { eventId } = await params
+    const body = await request.json()
+    const { templateId, customColors, customLogo, customBanner } = body
+
+    // Verify event exists and user owns it
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+      include: {
+        customer: true
+      }
+    })
+
+    if (!event) {
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 })
+    }
+
+    if (event.customer.id !== session.user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    // Update event with template and customizations
+    const updatedEvent = await prisma.event.update({
+      where: { id: eventId },
+      data: {
+        selectedTemplate: templateId || null,
+        customColors: customColors || null,
+        customLogo: customLogo || null,
+        bannerImage: customBanner || null,
+        updatedAt: new Date()
+      },
+      include: {
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
       }
     })
 

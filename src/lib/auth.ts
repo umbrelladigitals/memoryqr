@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs"
 
 export const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(prisma),
+  trustHost: true, // Production için gerekli
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -48,7 +49,7 @@ export const authConfig: NextAuthConfig = {
   },
   pages: {
     signIn: "/auth/signin",
-    signUp: "/auth/signup"
+    newUser: "/auth/signup"
   },
   callbacks: {
     async jwt({ token, user }) {

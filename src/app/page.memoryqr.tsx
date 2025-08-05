@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from "next/link";
+import { useSession } from 'next-auth/react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,53 +33,50 @@ import { GlassCard } from '@/components/GlassCard';
 import { FeatureShowcase } from '@/components/FeatureShowcase';
 import { InteractiveQRDemo } from '@/components/InteractiveQRDemo';
 
-// Mock data for plans (since we can't access the database in this preview)
-const mockPlans = [
-  {
-    id: 1,
-    name: 'FREE',
-    displayName: 'Başlangıç',
-    price: 0,
-    maxEvents: 3,
-    maxPhotosPerEvent: 100,
-    maxStorageGB: 1,
-    customBranding: false,
-    analytics: false,
-    prioritySupport: false,
-    whitelabel: false,
-    isActive: true
-  },
-  {
-    id: 2,
-    name: 'PRO',
-    displayName: 'Profesyonel',
-    price: 99,
-    maxEvents: 25,
-    maxPhotosPerEvent: 1000,
-    maxStorageGB: 10,
-    customBranding: true,
-    analytics: true,
-    prioritySupport: false,
-    whitelabel: false,
-    isActive: true
-  },
-  {
-    id: 3,
-    name: 'ENTERPRISE',
-    displayName: 'Kurumsal',
-    price: 299,
-    maxEvents: null,
-    maxPhotosPerEvent: null,
-    maxStorageGB: null,
-    customBranding: true,
-    analytics: true,
-    prioritySupport: true,
-    whitelabel: true,
-    isActive: true
-  }
-];
+// Plan interface
+interface Plan {
+  id: string
+  name: string
+  displayName: string
+  description: string | null
+  price: number
+  currency: string
+  maxEvents: number | null
+  maxPhotosPerEvent: number | null
+  maxStorageGB: number | null
+  customBranding: boolean
+  analytics: boolean
+  prioritySupport: boolean
+  whitelabel: boolean
+  isActive: boolean
+}
 
 export default function HomePage() {
+  const { data: session, status } = useSession();
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch plans from API
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const response = await fetch('/api/plans');
+        if (response.ok) {
+          const data = await response.json();
+          setPlans(data.plans);
+        } else {
+          console.error('Failed to fetch plans');
+        }
+      } catch (error) {
+        console.error('Error fetching plans:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPlans();
+  }, []);
+
   return (
     <div className="min-h-screen">
       {/* Modern Header with Glass Effect */}
@@ -105,14 +103,33 @@ export default function HomePage() {
             </Link>
           </nav>
           <div className="space-x-3">
-            <Link href="/auth/signin">
-              <Button variant="ghost" className="text-gray-700 hover:text-aurora-blue">Giriş Yap</Button>
-            </Link>
-            <Link href="/auth/signup">
-              <Button className="aurora-bg text-white shadow-lg hover:shadow-xl transition-all">
-                Ücretsiz Başla
-              </Button>
-            </Link>
+            {session ? (
+              // Giriş yapmış kullanıcılar için
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600 hidden sm:block">
+                  Hoş geldin, {session.user?.name || session.user?.email}
+                </span>
+                <Link href="/dashboard">
+                  <Button className="aurora-bg text-white shadow-lg hover:shadow-xl transition-all">
+                    Etkinlik Alanı'na Git
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              // Giriş yapmamış kullanıcılar için
+              <>
+                <Link href="/auth/signin">
+                  <Button variant="ghost" className="text-gray-700 hover:text-aurora-blue">
+                    Giriş Yap
+                  </Button>
+                </Link>
+                <Link href="/auth/signup">
+                  <Button className="aurora-bg text-white shadow-lg hover:shadow-xl transition-all">
+                    Ücretsiz Başla
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -253,7 +270,23 @@ export default function HomePage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {mockPlans.map((plan: any, index: number) => {
+            {loading ? (
+              // Loading skeleton
+              Array.from({ length: 3 }).map((_, index) => (
+                <Card key={index} className="animate-pulse">
+                  <CardContent className="p-6">
+                    <div className="h-6 bg-gray-200 rounded mb-4"></div>
+                    <div className="h-8 bg-gray-200 rounded mb-6"></div>
+                    <div className="space-y-3">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="h-4 bg-gray-200 rounded"></div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              plans.map((plan: Plan, index: number) => {
               const isPopular = plan.name === 'PRO';
               const planIcon = plan.name === 'FREE' ? Globe : plan.name === 'PRO' ? Zap : Crown;
               const PlanIcon = planIcon;
@@ -358,7 +391,7 @@ export default function HomePage() {
                     </div>
 
                     <div className="pt-6">
-                      <Link href="/auth/signup">
+                      <Link href={session ? `/dashboard?selectPlan=${plan.id}` : "/auth/signup"}>
                         <Button 
                           className={`w-full ${
                             isPopular 
@@ -366,7 +399,10 @@ export default function HomePage() {
                               : 'bg-gray-900 text-white hover:bg-gray-800'
                           } transition-all group`}
                         >
-                          {plan.price === 0 ? 'Ücretsiz Başla' : 'Plan Seç'}
+                          {session 
+                            ? (plan.price === 0 ? 'Bu Plana Geç' : 'Bu Planı Seç') 
+                            : (plan.price === 0 ? 'Ücretsiz Başla' : 'Plan Seç')
+                          }
                           <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                         </Button>
                       </Link>
@@ -374,7 +410,8 @@ export default function HomePage() {
                   </CardContent>
                 </GlassCard>
               );
-            })}
+            })
+            )}
           </div>
 
           <div className="text-center mt-16">

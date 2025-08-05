@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -15,170 +9,135 @@ datasource db {
 
 // Multi-tenant Customer model
 model Customer {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  subdomain String?  @unique // For subdomain support: customer.memoryqr.com
-  planId    String?  // Reference to Plan model
-  plan      Plan?    @relation(fields: [planId], references: [id])
-  isActive  Boolean  @default(true)
-  lastLogin DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  events       Event[]
-  subscription Subscription? // Optional subscription
-  payments     Payment[]
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  password     String
+  subdomain    String?       @unique
+  planId       String?
+  isActive     Boolean       @default(true)
+  lastLogin    DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   analytics    Analytics[]
+  plan         Plan?         @relation(fields: [planId], references: [id])
+  events       Event[]
+  payments     Payment[]
+  subscription Subscription?
 
   @@map("customers")
 }
 
-// Event model for each customer
 model Event {
-  id          String      @id @default(cuid())
-  title       String
-  description String?
-  date        DateTime
-  location    String?
-  isActive    Boolean     @default(true)
-  qrCode      String      @unique // Unique QR code for this event
-  maxUploads  Int?        // Max uploads per guest (optional limit)
-  autoArchive Boolean     @default(true)
-  archiveDate DateTime?   // When to auto-archive
-  templateId  String?     // Reference to UploadTemplate
-  template    UploadTemplate? @relation(fields: [templateId], references: [id])
-  customColors Json?      // Custom theme colors {"primary": "#color", "secondary": "#color"}
-  customLogo   String?    // Custom logo URL
-  customStyles Json?     // Custom styles {"headerStyle": "gradient", "buttonStyle": "rounded", "cardStyle": "shadow"}
-  customMessage String?   // Custom welcome message
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  // Relations
-  customerId String
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  uploads    Upload[]
-  analytics  Analytics[]
+  id               String      @id @default(cuid())
+  title            String
+  description      String?
+  date             DateTime
+  location         String?
+  isActive         Boolean     @default(true)
+  qrCode           String      @unique
+  maxUploads       Int?
+  autoArchive      Boolean     @default(true)
+  archiveDate      DateTime?
+  eventType        String?
+  participants     Json?
+  customColors     Json?
+  customLogo       String?
+  customStyles     Json?
+  customMessage    String?
+  bannerImage      String?
+  selectedTemplate String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  customerId       String
+  analytics        Analytics[]
+  customer         Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  uploads          Upload[]
 
   @@map("events")
 }
 
-// Upload model for photos/videos
 model Upload {
-  id          String     @id @default(cuid())
-  fileName    String
-  originalName String
-  fileSize    Int
-  mimeType    String
-  filePath    String     // S3 path
-  thumbnailPath String?  // S3 thumbnail path
-  guestId     String?    // Anonymous guest identifier
-  guestName   String?    // Optional guest name
-  isApproved  Boolean    @default(true) // Admin can approve/reject
-  likes       Int        @default(0)
-  metadata    Json?      // EXIF data, location, etc.
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  // Relations
-  eventId String
-  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  id            String   @id @default(cuid())
+  fileName      String
+  originalName  String
+  fileSize      Int
+  mimeType      String
+  filePath      String
+  thumbnailPath String?
+  guestId       String?
+  guestName     String?
+  isApproved    Boolean  @default(true)
+  likes         Int      @default(0)
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  eventId       String
+  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@map("uploads")
 }
 
-// Subscription Plan model - Editable plans
 model Plan {
-  id          String   @id @default(cuid())
-  name        String   @unique // FREE, PRO, ENTERPRISE, etc.
-  displayName String   // "Free Plan", "Pro Plan", etc.
-  description String?
-  price       Float    // Monthly price
-  currency    String   @default("USD")
-  
-  // Plan features
-  maxEvents        Int?     // null = unlimited
-  maxPhotosPerEvent Int?    // null = unlimited
-  maxStorageGB     Int?     // null = unlimited
-  
-  // Feature flags
-  customDomain     Boolean @default(false)
-  analytics        Boolean @default(false)
-  prioritySupport  Boolean @default(false)
-  apiAccess        Boolean @default(false)
-  whitelabel       Boolean @default(false)
-  
-  // Plan status
-  isActive         Boolean @default(true)
-  isPopular        Boolean @default(false)
-  sortOrder        Int     @default(0)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  customers Customer[]
-  subscriptions Subscription[]
+  id                String         @id @default(cuid())
+  name              String         @unique
+  displayName       String
+  description       String?
+  price             Float
+  currency          String         @default("USD")
+  maxEvents         Int?
+  maxPhotosPerEvent Int?
+  maxStorageGB      Int?
+  customDomain      Boolean        @default(false)
+  analytics         Boolean        @default(false)
+  prioritySupport   Boolean        @default(false)
+  apiAccess         Boolean        @default(false)
+  whitelabel        Boolean        @default(false)
+  isActive          Boolean        @default(true)
+  isPopular         Boolean        @default(false)
+  sortOrder         Int            @default(0)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  customers         Customer[]
+  subscriptions     Subscription[]
 
   @@map("plans")
 }
 
-// User roles
-enum Role {
-  SUPER_ADMIN // Platform admin
-  ADMIN       // Customer admin
-  USER        // Regular customer
-}
-
-// Admin user model - separate from customers
 model Admin {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
-  email     String   @unique
+  email     String    @unique
   password  String
-  role      Role     @default(ADMIN)
-  isActive  Boolean  @default(true)
+  role      Role      @default(ADMIN)
+  isActive  Boolean   @default(true)
   lastLogin DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@map("admins")
 }
 
-// Subscription management - Simplified to reference Plan model only
 model Subscription {
-  id               String            @id @default(cuid())
-  customerId       String            @unique
-  planId           String
-  plan             Plan              @relation(fields: [planId], references: [id])
-  status           SubscriptionStatus @default(ACTIVE)
-  startDate        DateTime          @default(now())
-  endDate          DateTime?
-  price            Float             // Actual price paid (can be discounted)
-  currency         String            @default("USD")
-  paymentMethod    String?
-  isTrialActive    Boolean           @default(false)
-  trialEndsAt      DateTime?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-
-  // Relations
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  id            String             @id @default(cuid())
+  customerId    String             @unique
+  planId        String
+  status        SubscriptionStatus @default(ACTIVE)
+  startDate     DateTime           @default(now())
+  endDate       DateTime?
+  price         Float
+  currency      String             @default("USD")
+  paymentMethod String?
+  isTrialActive Boolean            @default(false)
+  trialEndsAt   DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  customer      Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  plan          Plan               @relation(fields: [planId], references: [id])
 
   @@map("subscriptions")
 }
 
-enum SubscriptionStatus {
-  ACTIVE
-  CANCELLED
-  EXPIRED
-  PAST_DUE
-}
-
-// Payment tracking
 model Payment {
   id             String        @id @default(cuid())
   customerId     String
@@ -191,11 +150,169 @@ model Payment {
   description    String?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
-
-  // Relations
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer       Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@map("payments")
+}
+
+model Analytics {
+  id         String   @id @default(cuid())
+  customerId String
+  eventId    String?
+  metric     String
+  value      Int      @default(1)
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  event      Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("analytics")
+}
+
+model UploadTemplate {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  displayName     String
+  description     String?
+  previewImage    String?
+  heroImage       String?
+  logoImage       String?
+  galleryImages   Json?
+  primaryColor    String   @default("#3B82F6")
+  secondaryColor  String   @default("#8B5CF6")
+  backgroundColor String   @default("#F8FAFC")
+  textColor       String   @default("#1F2937")
+  headerStyle     String   @default("minimal")
+  buttonStyle     String   @default("rounded")
+  cardStyle       String   @default("shadow")
+  customCSS       String?
+  animations      Json?
+  layout          Json?
+  fonts           Json?
+  isActive        Boolean  @default(true)
+  isDefault       Boolean  @default(false)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("upload_templates")
+}
+
+model Notification {
+  id            String           @id @default(cuid())
+  type          NotificationType
+  title         String
+  message       String
+  recipientId   String?
+  recipientType String?
+  isRead        Boolean          @default(false)
+  actionUrl     String?
+  createdAt     DateTime         @default(now())
+
+  @@map("notifications")
+}
+
+model SystemSettings {
+  id                    String   @id @default(cuid())
+  maxImageSizeMB        Int      @default(10)
+  maxVideoSizeMB        Int      @default(100)
+  allowedImageFormats   String   @default("jpg,jpeg,png,gif,webp")
+  allowedVideoFormats   String   @default("mp4,mov,avi,mkv,webm,m4v")
+  maxUploadsPerEvent    Int      @default(100)
+  autoDeleteAfterDays   Int?
+  enableVideoUploads    Boolean  @default(true)
+  enableImageUploads    Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+model SiteSettings {
+  id                    String   @id @default(cuid())
+  // General Site Settings
+  siteName              String   @default("MemoryQR")
+  siteDescription       String   @default("QR Kod ile Anı Paylaşım Platformu")
+  siteUrl               String   @default("https://memoryqr.com")
+  adminEmail            String   @default("admin@memoryqr.com")
+  supportEmail          String   @default("support@memoryqr.com")
+  timezone              String   @default("Europe/Istanbul")
+  language              String   @default("tr")
+  currency              String   @default("TRY")
+  
+  // Branding
+  logo                  String?
+  favicon               String?
+  appleTouchIcon        String?
+  ogImage               String?
+  
+  // Social Media
+  facebookUrl           String?
+  twitterUrl            String?
+  instagramUrl          String?
+  linkedinUrl           String?
+  youtubeUrl            String?
+  
+  // SEO Settings
+  metaTitle             String?
+  metaDescription       String?
+  metaKeywords          String?
+  googleAnalyticsId     String?
+  googleSiteVerification String?
+  
+  // Email Settings
+  smtpHost              String?
+  smtpPort              Int?
+  smtpUser              String?
+  smtpPassword          String?
+  smtpSecure            Boolean  @default(true)
+  emailFromName         String   @default("MemoryQR")
+  emailFromAddress      String?
+  
+  // Notification Settings
+  emailNotifications    Boolean  @default(true)
+  smsNotifications      Boolean  @default(false)
+  pushNotifications     Boolean  @default(true)
+  
+  // Feature Toggles
+  userRegistration      Boolean  @default(true)
+  emailVerification     Boolean  @default(true)
+  socialLogin           Boolean  @default(true)
+  maintenanceMode       Boolean  @default(false)
+  maintenanceMessage    String?
+  
+  // Payment Settings
+  stripePublishableKey  String?
+  stripeSecretKey       String?
+  paypalClientId        String?
+  paypalClientSecret    String?
+  
+  // Theme Settings
+  primaryColor          String   @default("#3B82F6")
+  secondaryColor        String   @default("#10B981")
+  accentColor           String   @default("#F59E0B")
+  backgroundColor       String   @default("#FFFFFF")
+  textColor             String   @default("#1F2937")
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  USER
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAST_DUE
 }
 
 enum PaymentStatus {
@@ -203,84 +320,6 @@ enum PaymentStatus {
   COMPLETED
   FAILED
   REFUNDED
-}
-
-// Analytics tracking
-model Analytics {
-  id              String   @id @default(cuid())
-  customerId      String
-  eventId         String?
-  metric          String   // 'page_view', 'upload', 'download', etc.
-  value           Int      @default(1)
-  metadata        Json?    // Additional data
-  ipAddress       String?
-  userAgent       String?
-  createdAt       DateTime @default(now())
-
-  // Relations
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  event    Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
-
-  @@map("analytics")
-}
-
-// Upload Page Templates
-model UploadTemplate {
-  id           String   @id @default(cuid())
-  name         String   @unique // "wedding", "birthday", "corporate"
-  displayName  String   // "Düğün", "Doğum Günü", "Kurumsal Etkinlik"
-  description  String?
-  previewImage String?  // Template preview image URL
-  
-  // Custom images for template
-  heroImage     String?  // Main background/hero image
-  logoImage     String?  // Custom logo/brand image
-  galleryImages Json?    // Array of sample gallery images
-  
-  // Design settings
-  primaryColor   String @default("#3B82F6")    // Main theme color
-  secondaryColor String @default("#8B5CF6")    // Accent color
-  backgroundColor String @default("#F8FAFC")   // Background color
-  textColor      String @default("#1F2937")    // Text color
-  
-  // Layout settings
-  headerStyle    String @default("minimal")    // "minimal", "gradient", "image"
-  buttonStyle    String @default("rounded")    // "rounded", "square", "pill"
-  cardStyle      String @default("shadow")     // "shadow", "border", "flat"
-  
-  // Content settings - removed welcome texts as they come from event data
-  
-  // Advanced settings (JSON for flexibility)
-  customCSS      String?  // Custom CSS for advanced customization
-  animations     Json?    // Animation preferences
-  layout         Json?    // Layout configuration
-  fonts          Json?    // Font settings
-  
-  isActive       Boolean  @default(true)
-  isDefault      Boolean  @default(false)
-  sortOrder      Int      @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  // Relations
-  events Event[]
-
-  @@map("upload_templates")
-}
-
-// System notifications
-model Notification {
-  id         String            @id @default(cuid())
-  type       NotificationType
-  title      String
-  message    String
-  recipientId String?         // Customer ID or Admin ID
-  recipientType String?       // 'customer' or 'admin'
-  isRead     Boolean          @default(false)
-  actionUrl  String?
-  createdAt  DateTime         @default(now())
-
-  @@map("notifications")
 }
 
 enum NotificationType {

@@ -3,15 +3,25 @@ import fs from "fs";
 
 const nextConfig = {
   distDir: "dist",
-  productionBrowserSourceMaps: process.env.NODE_ENV === "production",
-  reactStrictMode: false,
+  productionBrowserSourceMaps: false, // Production'da source map'leri kapatıyoruz
+  reactStrictMode: true, // Production için strict mode açıyoruz
+  poweredByHeader: false, // X-Powered-By header'ını kaldırıyoruz
+  compress: true, // Gzip sıkıştırma
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: true, // Build sırasında TypeScript hatalarını geçici olarak ignore et
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: true, // Build sırasında ESLint hatalarını geçici olarak ignore et
   },
   env: {},
+  experimental: {
+    optimizePackageImports: [
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-tabs',
+      'lucide-react'
+    ],
+  },
   images: {
     remotePatterns: [
       {
@@ -24,7 +34,22 @@ const nextConfig = {
       },
     ],
   },
+  // Turbopack stable config
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    },
+  },
+  // Only use webpack config when not using turbopack
   webpack: (config, options) => {
+    // Skip webpack config when using turbopack
+    if (options.isServer || process.env.TURBOPACK) {
+      return config;
+    }
+    
     config.devtool =
       process.env.NODE_ENV === "production" ? "source-map" : false;
     config.optimization = {
@@ -51,12 +76,6 @@ const nextConfig = {
         resourceQuery: /url/,
         type: "asset/resource",
       },
-      //      {
-      //        test: /\.svg$/i,
-      //        issuer: /\.[jt]sx?$/,
-      //        resourceQuery: { not: [/url/] },
-      //        use: ["@svgr/webpack"],
-      //      }
     );
 
     return config;

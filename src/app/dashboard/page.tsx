@@ -2,6 +2,16 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import DashboardStats from '@/components/dashboard/DashboardStats'
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Dashboard - MemoryQR',
+  description: 'Etkinliklerinizi yönetin, istatistikleri görüntüleyin ve fotoğraf paylaşımlarını takip edin.',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 export default async function DashboardPage() {
   const session = await auth()

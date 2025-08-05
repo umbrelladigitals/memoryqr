@@ -2,6 +2,9 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import DashboardNavbar from '@/components/dashboard/DashboardNavbar'
+import DashboardClient from '@/components/dashboard/DashboardClient'
+import { SessionProvider } from 'next-auth/react'
+import { Toaster } from 'sonner'
 
 export default async function DashboardLayout({
   children,
@@ -28,16 +31,20 @@ export default async function DashboardLayout({
   })
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardNavbar 
-        user={{
-          name: customer?.name || 'Kullanıcı',
-          plan: customer?.plan
-        }}
-      />
-      <main className="p-6 max-w-7xl mx-auto">
-        {children}
-      </main>
-    </div>
+    <SessionProvider session={session}>
+      <div className="min-h-screen bg-gray-50">
+        <DashboardNavbar 
+          user={{
+            name: customer?.name || 'Kullanıcı',
+            plan: customer?.plan
+          }}
+        />
+        <main className="p-6 max-w-7xl mx-auto">
+          {children}
+        </main>
+        <DashboardClient />
+        <Toaster />
+      </div>
+    </SessionProvider>
   )
 }

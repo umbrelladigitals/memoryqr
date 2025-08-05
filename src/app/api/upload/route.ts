@@ -3,6 +3,16 @@ import { prisma } from '@/lib/prisma'
 import { r2Service } from '@/lib/r2-service'
 import { nanoid } from 'nanoid'
 
+// Default settings when no system settings found
+const DEFAULT_SETTINGS = {
+  maxImageSizeMB: 10,
+  maxVideoSizeMB: 100,
+  allowedImageFormats: "jpg,jpeg,png,gif,webp",
+  allowedVideoFormats: "mp4,mov,avi,mkv,webm,m4v",
+  enableVideoUploads: true,
+  enableImageUploads: true
+}
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
@@ -17,18 +27,57 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
+    // Get system settings or use defaults
+    let settings = DEFAULT_SETTINGS
+    try {
+      const systemSettings = await prisma.$queryRaw`SELECT * FROM system_settings LIMIT 1` as any[]
+      if (systemSettings.length > 0) {
+        settings = systemSettings[0]
+      }
+    } catch (error) {
+      console.log('Using default settings')
+    }
+
+    // Validate file type (image or video)
+    const isImage = file.type.startsWith('image/')
+    const isVideo = file.type.startsWith('video/')
+    
+    if (!isImage && !isVideo) {
       return NextResponse.json(
-        { error: 'Sadece resim dosyaları yüklenebilir' },
+        { error: 'Sadece resim ve video dosyaları yüklenebilir' },
         { status: 400 }
       )
     }
 
-    // Validate file size (10MB)
-    if (file.size > 10 * 1024 * 1024) {
+    // Check if image/video uploads are enabled
+    if (isImage && !settings.enableImageUploads) {
       return NextResponse.json(
-        { error: 'Dosya boyutu 10MB\'dan büyük olamaz' },
+        { error: 'Resim yükleme devre dışı' },
+        { status: 400 }
+      )
+    }
+    
+    if (isVideo && !settings.enableVideoUploads) {
+      return NextResponse.json(
+        { error: 'Video yükleme devre dışı' },
+        { status: 400 }
+      )
+    }
+
+    // Dynamic size limits based on settings
+    const maxSizeImage = settings.maxImageSizeMB * 1024 * 1024
+    const maxSizeVideo = settings.maxVideoSizeMB * 1024 * 1024
+    
+    if (isImage && file.size > maxSizeImage) {
+      return NextResponse.json(
+        { error: `Resim dosyası boyutu ${settings.maxImageSizeMB}MB'dan büyük olamaz` },
+        { status: 400 }
+      )
+    }
+    
+    if (isVideo && file.size > maxSizeVideo) {
+      return NextResponse.json(
+        { error: `Video dosyası boyutu ${settings.maxVideoSizeMB}MB'dan büyük olamaz` },
         { status: 400 }
       )
     }
@@ -78,12 +127,13 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({
-      message: 'Fotoğraf başarıyla yüklendi',
+      message: isImage ? 'Fotoğraf başarıyla yüklendi' : 'Video başarıyla yüklendi',
       upload: {
         id: upload.id,
         fileName: upload.fileName,
         filePath: upload.filePath,
-        fileUrl: r2Service.getFileUrl(upload.filePath), // Return R2 URL
+        mimeType: upload.mimeType,
+        isVideo: isVideo
       }
     })
   } catch (error) {

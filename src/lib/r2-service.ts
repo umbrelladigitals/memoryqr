@@ -1,4 +1,5 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 // Get R2 configuration from environment
 function getR2Config() {
@@ -51,6 +52,7 @@ export interface CloudflareR2Service {
   uploadFile: (options: UploadOptions) => Promise<string>
   deleteFile: (filePath: string) => Promise<void>
   getFileUrl: (filePath: string) => string
+  getSignedUrl: (filePath: string) => Promise<string>
 }
 
 // Strategy 1: Single Bucket with Customer/Event Structure
@@ -110,6 +112,25 @@ export const r2Service: CloudflareR2Service = {
     // Direct R2 URL (fallback)
     return `${config.endpoint}/${config.bucketName}/${filePath}`
   },
+
+  async getSignedUrl(filePath: string): Promise<string> {
+    const config = getR2Config()
+    const r2Client = createR2Client()
+    
+    try {
+      const command = new GetObjectCommand({
+        Bucket: config.bucketName,
+        Key: filePath,
+      })
+
+      // Generate signed URL valid for 24 hours
+      const signedUrl = await getSignedUrl(r2Client, command, { expiresIn: 86400 })
+      return signedUrl
+    } catch (error) {
+      console.error('R2 signed URL error:', error)
+      throw new Error('Failed to generate signed URL')
+    }
+  },
 }
 
 // Alternative Strategy 2: Per-Customer Buckets
@@ -159,5 +180,25 @@ export const r2PerCustomerService: CloudflareR2Service = {
   getFileUrl(filePath: string): string {
     const config = getR2Config()
     return `${config.publicUrl}/${filePath}`
+  },
+
+  async getSignedUrl(filePath: string): Promise<string> {
+    const r2Client = createR2Client()
+    const [bucketName, ...keyParts] = filePath.split('/')
+    const key = keyParts.join('/')
+    
+    try {
+      const command = new GetObjectCommand({
+        Bucket: bucketName,
+        Key: key,
+      })
+
+      // Generate signed URL valid for 1 hour
+      const signedUrl = await getSignedUrl(r2Client, command, { expiresIn: 3600 })
+      return signedUrl
+    } catch (error) {
+      console.error('R2 signed URL error:', error)
+      throw new Error('Failed to generate signed URL')
+    }
   },
 }

@@ -414,6 +414,45 @@ async function main() {
   
   console.log('✅ Upload templates created')
 
+  // Create default system settings
+  try {
+    await prisma.$executeRaw`
+      INSERT OR REPLACE INTO system_settings (
+        id, maxImageSizeMB, maxVideoSizeMB, allowedImageFormats, allowedVideoFormats,
+        maxUploadsPerEvent, autoDeleteAfterDays, enableVideoUploads, enableImageUploads,
+        createdAt, updatedAt
+      ) VALUES (
+        'default', 10, 100, 'jpg,jpeg,png,gif,webp', 'mp4,mov,avi,mkv,webm,m4v',
+        100, 30, 1, 1, datetime('now'), datetime('now')
+      )
+    `
+    console.log('✅ System settings created')
+  } catch (error) {
+    console.log('⚠️ System settings already exist or error:', error)
+  }
+
+  // Create default site settings
+  try {
+    await prisma.$executeRaw`
+      INSERT OR REPLACE INTO site_settings (
+        id, siteName, siteDescription, siteUrl, adminEmail, supportEmail,
+        timezone, language, currency, primaryColor, secondaryColor, accentColor,
+        backgroundColor, textColor, emailNotifications, smsNotifications,
+        pushNotifications, userRegistration, emailVerification, socialLogin,
+        maintenanceMode, emailFromName, createdAt, updatedAt
+      ) VALUES (
+        'default', 'MemoryQR Paylaşım Platformu', 'QR kod ile anı paylaşım platformu - Modern, güvenli ve kolay kullanım',
+        'http://localhost:3000', 'admin@memoryqr.com', 'support@memoryqr.com',
+        'Europe/Istanbul', 'tr', 'TRY', '#3B82F6', '#10B981', '#F59E0B',
+        '#FFFFFF', '#1F2937', 1, 0, 1, 1, 1, 1, 0, 'MemoryQR',
+        datetime('now'), datetime('now')
+      )
+    `
+    console.log('✅ Site settings created')
+  } catch (error) {
+    console.log('⚠️ Site settings already exist or error:', error)
+  }
+
   console.log('🎉 Database seeded successfully!')
 }
 

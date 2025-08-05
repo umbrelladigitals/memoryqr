@@ -62,7 +62,8 @@ export default function TemplateManagement({ userId, eventId }: TemplateManageme
       if (!response.ok) throw new Error('Şablonlar yüklenemedi')
       
       const data = await response.json()
-      setTemplates(data.templates)
+      const templatesList = data.templates || []
+      setTemplates(templatesList)
       
       // If this is for a specific event, load the current template selection
       if (eventId) {
@@ -76,10 +77,12 @@ export default function TemplateManagement({ userId, eventId }: TemplateManageme
       }
       
       // Set default selected template if none is selected
-      if (!selectedTemplateId) {
-        const defaultTemplate = data.templates.find((t: UploadTemplate) => t.isDefault)
+      if (!selectedTemplateId && templatesList.length > 0) {
+        const defaultTemplate = templatesList.find((t: UploadTemplate) => t.isDefault)
         if (defaultTemplate) {
           setSelectedTemplateId(defaultTemplate.id)
+        } else if (templatesList.length > 0) {
+          setSelectedTemplateId(templatesList[0].id)
         }
       }
     } catch (error) {
@@ -96,7 +99,7 @@ export default function TemplateManagement({ userId, eventId }: TemplateManageme
   }
 
   const handleCustomize = (templateId: string) => {
-    const template = templates.find(t => t.id === templateId)
+    const template = templates?.find(t => t.id === templateId)
     if (template) {
       setCustomizingTemplate(template)
       setCurrentView('customize')
@@ -160,7 +163,7 @@ export default function TemplateManagement({ userId, eventId }: TemplateManageme
     try {
       setIsSaving(true)
       
-      const selectedTemplate = templates.find(t => t.id === selectedTemplateId)
+      const selectedTemplate = templates?.find(t => t.id === selectedTemplateId)
       
       const response = await fetch(`/api/events/${eventId}/template`, {
         method: 'PUT',
@@ -195,7 +198,7 @@ export default function TemplateManagement({ userId, eventId }: TemplateManageme
     setCustomizingTemplate(null)
   }
 
-  const selectedTemplate = templates.find(t => t.id === selectedTemplateId)
+  const selectedTemplate = templates?.find(t => t.id === selectedTemplateId)
 
   if (isLoading) {
     return (

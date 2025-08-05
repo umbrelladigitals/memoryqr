@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,9 +10,8 @@ import {
   Calendar, 
   Image, 
   Eye,
-  Palette
+  Edit
 } from 'lucide-react'
-import CreateEventDialog from '@/components/create-event-dialog'
 
 interface Event {
   id: string
@@ -33,7 +31,6 @@ interface EventsClientProps {
 }
 
 export default function EventsClient({ events, userId }: EventsClientProps) {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const router = useRouter()
 
   const formatDate = (date: Date) => {
@@ -53,7 +50,7 @@ export default function EventsClient({ events, userId }: EventsClientProps) {
             Etkinliklerinizi yönetin ve QR kodlarını görüntüleyin
           </p>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
+        <Button onClick={() => router.push('/dashboard/events/create')}>
           <Plus className="h-4 w-4 mr-2" />
           Yeni Etkinlik
         </Button>
@@ -67,7 +64,7 @@ export default function EventsClient({ events, userId }: EventsClientProps) {
             <p className="text-gray-600 mb-4">
               İlk etkinliğinizi oluşturun ve QR kod ile fotoğraf toplamaya başlayın.
             </p>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Button onClick={() => router.push('/dashboard/events/create')}>
               <Plus className="h-4 w-4 mr-2" />
               İlk Etkinliğimi Oluştur
             </Button>
@@ -117,10 +114,10 @@ export default function EventsClient({ events, userId }: EventsClientProps) {
                     <Button 
                       size="sm" 
                       variant="outline"
-                      onClick={() => router.push(`/dashboard/templates?eventId=${event.id}`)}
-                      title="Şablonu Özelleştir"
+                      onClick={() => router.push(`/dashboard/events/${event.id}/edit`)}
+                      title="Düzenle"
                     >
-                      <Palette className="h-4 w-4" />
+                      <Edit className="h-4 w-4" />
                     </Button>
                     <Button 
                       size="sm" 
@@ -137,12 +134,6 @@ export default function EventsClient({ events, userId }: EventsClientProps) {
           ))}
         </div>
       )}
-
-      <CreateEventDialog
-        isOpen={isCreateDialogOpen}
-        onClose={() => setIsCreateDialogOpen(false)}
-        customerId={userId}
-      />
     </div>
   )
 }

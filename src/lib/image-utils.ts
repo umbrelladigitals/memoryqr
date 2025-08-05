@@ -14,8 +14,10 @@ export function getImageUrl(filePath: string): string {
     return filePath // Keep local path for now during migration
   }
   
-  // Otherwise, it's an R2 key, get the full URL
-  return r2Service.getFileUrl(filePath)
+  // For R2 stored files, use signed URL via API endpoint
+  // Split path and encode each segment properly
+  const pathSegments = filePath.split('/').map(segment => encodeURIComponent(segment))
+  return `/api/images/${pathSegments.join('/')}`
 }
 
 // Helper function to check if image is from R2

@@ -26,7 +26,7 @@ interface Customer {
     name: string
     displayName: string
     price: number
-  }
+  } | null
   isActive: boolean
   createdAt: string
   lastLogin: string | null
@@ -54,7 +54,7 @@ export default function CustomerManagementClient({ customers }: CustomerManageme
   const filteredCustomers = customers.filter(customer => {
     const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          customer.email.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesPlan = filterPlan === 'all' || customer.plan.name === filterPlan
+    const matchesPlan = filterPlan === 'all' || (customer.plan && customer.plan.name === filterPlan)
     const matchesStatus = filterStatus === 'all' || 
                          (filterStatus === 'active' && customer.isActive) ||
                          (filterStatus === 'inactive' && !customer.isActive)
@@ -62,7 +62,8 @@ export default function CustomerManagementClient({ customers }: CustomerManageme
     return matchesSearch && matchesPlan && matchesStatus
   })
 
-  const getPlanColor = (plan: { name: string; displayName: string; price: number }) => {
+  const getPlanColor = (plan: { name: string; displayName: string; price: number } | null) => {
+    if (!plan) return 'bg-gray-100 text-gray-800'
     switch (plan.name) {
       case 'FREE': return 'bg-gray-100 text-gray-800'
       case 'PRO': return 'bg-blue-100 text-blue-800'
@@ -237,7 +238,7 @@ export default function CustomerManagementClient({ customers }: CustomerManageme
 
                     {/* Plan */}
                     <Badge className={getPlanColor(customer.plan)}>
-                      {customer.plan.displayName}
+                      {customer.plan ? customer.plan.displayName : 'Plan Yok'}
                     </Badge>
 
                     {/* Subscription Status */}

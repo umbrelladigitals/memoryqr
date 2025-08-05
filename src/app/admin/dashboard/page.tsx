@@ -3,6 +3,16 @@ import { jwtVerify } from 'jose'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import AdminDashboardClient from './admin-dashboard-client'
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Admin Dashboard - MemoryQR',
+  description: 'Yönetici paneli - Platform istatistikleri, kullanıcı yönetimi ve genel sistem ayarları.',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key')
 

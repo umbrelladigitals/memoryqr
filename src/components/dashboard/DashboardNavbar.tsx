@@ -13,7 +13,7 @@ import {
   Crown,
   Settings, 
   LogOut,
-  CreditCard,
+  Download,
   Menu,
   X
 } from 'lucide-react'
@@ -46,10 +46,22 @@ export default function DashboardNavbar({ user }: DashboardNavbarProps) {
       current: pathname.startsWith('/dashboard/events')
     },
     {
-      name: 'Plan & Faturalandırma',
-      href: '/dashboard/billing',
-      icon: CreditCard,
-      current: pathname.startsWith('/dashboard/billing')
+      name: 'Analytics',
+      href: '/dashboard/analytics',
+      icon: BarChart3,
+      current: pathname.startsWith('/dashboard/analytics')
+    },
+    {
+      name: 'İndirmeler',
+      href: '/dashboard/downloads',
+      icon: Download,
+      current: pathname.startsWith('/dashboard/downloads')
+    },
+    {
+      name: 'Ayarlar',
+      href: '/dashboard/settings',
+      icon: Settings,
+      current: pathname.startsWith('/dashboard/settings')
     }
   ]
 
@@ -112,9 +124,6 @@ export default function DashboardNavbar({ user }: DashboardNavbarProps) {
               <span className="text-sm text-gray-600">
                 Hoş geldiniz, {user.name}
               </span>
-              <Button variant="ghost" size="sm">
-                <Settings className="h-4 w-4" />
-              </Button>
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
                 <LogOut className="h-4 w-4" />
               </Button>
@@ -167,9 +176,6 @@ export default function DashboardNavbar({ user }: DashboardNavbarProps) {
               <div className="flex items-center justify-between px-3 py-2">
                 <span className="text-sm text-gray-600">{user.name}</span>
                 <div className="flex space-x-2">
-                  <Button variant="ghost" size="sm">
-                    <Settings className="h-4 w-4" />
-                  </Button>
                   <Button variant="ghost" size="sm" onClick={handleSignOut}>
                     <LogOut className="h-4 w-4" />
                   </Button>

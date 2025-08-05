@@ -39,6 +39,7 @@ interface CreateEventDialogProps {
 
 export default function CreateEventDialog({ isOpen, onClose, customerId }: CreateEventDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [templates, setTemplates] = useState<Template[]>([])
   const [formData, setFormData] = useState({
     title: '',
@@ -46,6 +47,16 @@ export default function CreateEventDialog({ isOpen, onClose, customerId }: Creat
     date: '',
     location: '',
     templateId: '',
+    customLogo: '',
+    bannerImage: '',
+    eventType: '',
+    participants: {
+      bride: '',
+      groom: '',
+      celebrant: '',
+      organizer: '',
+      parents: ''
+    }
   })
   const router = useRouter()
 
@@ -64,7 +75,11 @@ export default function CreateEventDialog({ isOpen, onClose, customerId }: Creat
         // Set default template
         const defaultTemplate = data.templates?.find((t: Template) => t.name === 'wedding')
         if (defaultTemplate) {
-          setFormData(prev => ({ ...prev, templateId: defaultTemplate.id }))
+          setFormData(prev => ({ 
+            ...prev, 
+            templateId: defaultTemplate.id,
+            eventType: defaultTemplate.name 
+          }))
         }
       }
     } catch (error) {
@@ -94,6 +109,8 @@ export default function CreateEventDialog({ isOpen, onClose, customerId }: Creat
         body: JSON.stringify({
           ...formData,
           customerId,
+          participants: formData.participants,
+          eventType: formData.eventType || 'other'
         }),
       })
 
@@ -107,11 +124,31 @@ export default function CreateEventDialog({ isOpen, onClose, customerId }: Creat
           description: '', 
           date: '', 
           location: '',
-          templateId: ''
+          templateId: '',
+          customLogo: '',
+          bannerImage: '',
+          eventType: '',
+          participants: {
+            bride: '',
+            groom: '',
+            celebrant: '',
+            organizer: '',
+            parents: ''
+          }
         })
         router.refresh()
       } else {
-        toast.error(data.error || 'Bir hata oluştu')
+        // Handle specific authentication errors
+        if (response.status === 403 && data.error?.includes('login again')) {
+          toast.error('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.')
+          // Redirect to login page
+          window.location.href = '/auth/signin'
+        } else if (response.status === 401) {
+          toast.error('Yetkiniz yok. Lütfen giriş yapın.')
+          window.location.href = '/auth/signin'
+        } else {
+          toast.error(data.error || 'Bir hata oluştu')
+        }
       }
     } catch (error) {
       toast.error('Bir hata oluştu')
@@ -122,6 +159,62 @@ export default function CreateEventDialog({ isOpen, onClose, customerId }: Creat
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('type', 'logo')
+
+      const response = await fetch('/api/templates/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        handleChange('customLogo', data.filePath)
+        toast.success('Logo yüklendi')
+      } else {
+        toast.error('Logo yükleme hatası')
+      }
+    } catch (error) {
+      toast.error('Logo yükleme sırasında hata oluştu')
+    }
+    setUploading(false)
+  }
+
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('type', 'banner')
+
+      const response = await fetch('/api/templates/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        handleChange('bannerImage', data.filePath)
+        toast.success('Banner yüklendi')
+      } else {
+        toast.error('Banner yükleme hatası')
+      }
+    } catch (error) {
+      toast.error('Banner yükleme sırasında hata oluştu')
+    }
+    setUploading(false)
   }
 
   return (
@@ -183,7 +276,10 @@ export default function CreateEventDialog({ isOpen, onClose, customerId }: Creat
                   <button
                     key={template.id}
                     type="button"
-                    onClick={() => handleChange('templateId', template.id)}
+                    onClick={() => {
+                      handleChange('templateId', template.id)
+                      setFormData(prev => ({ ...prev, eventType: template.name }))
+                    }}
                     className={`p-3 border rounded-lg text-center transition-all ${
                       isSelected 
                         ? 'border-blue-500 bg-blue-50' 
@@ -221,6 +317,160 @@ export default function CreateEventDialog({ isOpen, onClose, customerId }: Creat
                 placeholder="Etkinlik konumu"
                 className="pl-10"
               />
+            </div>
+          </div>
+
+          {/* Participants based on event type */}
+          {formData.templateId && (
+            <div className="space-y-2">
+              <Label>Katılımcı Bilgileri</Label>
+              {(() => {
+                const selectedTemplate = templates.find(t => t.id === formData.templateId);
+                const templateName = selectedTemplate?.name;
+
+                if (templateName === 'wedding' || templateName === 'engagement') {
+                  return (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Input
+                          placeholder="Gelin adı"
+                          value={formData.participants.bride}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            participants: { ...prev.participants, bride: e.target.value }
+                          }))}
+                        />
+                      </div>
+                      <div>
+                        <Input
+                          placeholder="Damat adı"
+                          value={formData.participants.groom}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            participants: { ...prev.participants, groom: e.target.value }
+                          }))}
+                        />
+                      </div>
+                    </div>
+                  );
+                } else if (templateName === 'birthday') {
+                  return (
+                    <Input
+                      placeholder="Doğum günü sahibi"
+                      value={formData.participants.celebrant}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        participants: { ...prev.participants, celebrant: e.target.value }
+                      }))}
+                    />
+                  );
+                } else if (templateName === 'baby_shower') {
+                  return (
+                    <Input
+                      placeholder="Anne & Baba adı"
+                      value={formData.participants.parents}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        participants: { ...prev.participants, parents: e.target.value }
+                      }))}
+                    />
+                  );
+                } else {
+                  return (
+                    <Input
+                      placeholder="Etkinlik organizatörü"
+                      value={formData.participants.organizer}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        participants: { ...prev.participants, organizer: e.target.value }
+                      }))}
+                    />
+                  );
+                }
+              })()}
+              <p className="text-xs text-gray-500">
+                Bu bilgiler QR kod kartlarında görünecektir.
+              </p>
+            </div>
+          )}
+
+          {/* Logo Upload */}
+          <div className="space-y-2">
+            <Label htmlFor="logo">Logo (Opsiyonel)</Label>
+            <div className="space-y-2">
+              {formData.customLogo && (
+                <div className="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg">
+                  <img 
+                    src={`/api/images/${encodeURIComponent(formData.customLogo)}`}
+                    alt="Logo" 
+                    className="w-12 h-12 object-contain rounded border"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Logo yüklendi</p>
+                    <p className="text-xs text-gray-500">Etkinlik sayfasında görünecek</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleChange('customLogo', '')}
+                  >
+                    Kaldır
+                  </Button>
+                </div>
+              )}
+              <Input
+                id="logo"
+                type="file"
+                accept="image/*"
+                onChange={handleLogoUpload}
+                disabled={uploading}
+                className="file:mr-4 file:py-1 file:px-4 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+              <p className="text-xs text-gray-500">
+                PNG, JPG veya SVG formatında logo yükleyebilirsiniz.
+              </p>
+            </div>
+          </div>
+
+          {/* Banner Upload */}
+          <div className="space-y-2">
+            <Label htmlFor="banner">Banner (Opsiyonel)</Label>
+            <div className="space-y-2">
+              {formData.bannerImage && (
+                <div className="space-y-2">
+                  <img 
+                    src={`/api/images/${encodeURIComponent(formData.bannerImage)}`}
+                    alt="Banner" 
+                    className="w-full h-24 object-cover rounded border"
+                  />
+                  <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="text-sm font-medium">Banner yüklendi</p>
+                      <p className="text-xs text-gray-500">Etkinlik sayfasının üst kısmında görünecek</p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleChange('bannerImage', '')}
+                    >
+                      Kaldır
+                    </Button>
+                  </div>
+                </div>
+              )}
+              <Input
+                id="banner"
+                type="file"
+                accept="image/*"
+                onChange={handleBannerUpload}
+                disabled={uploading}
+                className="file:mr-4 file:py-1 file:px-4 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+              <p className="text-xs text-gray-500">
+                Etkinlik banner'ı olarak kullanılacak görseli yükleyebilirsiniz.
+              </p>
             </div>
           </div>
           

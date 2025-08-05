@@ -10,143 +10,135 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
-    const eventId = searchParams.get('eventId')
-
-    // Get base templates only (not user-created ones)
-    const baseTemplates = await prisma.uploadTemplate.findMany({
-      where: { 
-        isActive: true,
-        name: {
-          in: ['wedding', 'birthday', 'corporate'] // Only base templates
-        }
+    // Return hardcoded templates with rich data for development
+    const templates = [
+      {
+        id: 'elegant-classic',
+        name: 'elegant-classic',
+        displayName: 'Elegant Classic',
+        description: 'Zarif ve klasik tasarım, düğün ve özel etkinlikler için mükemmel',
+        previewImage: 'https://picsum.photos/400/300?random=1',
+        heroImage: 'https://picsum.photos/800/400?random=2',
+        primaryColor: '#8B5CF6',
+        secondaryColor: '#A78BFA',
+        backgroundColor: '#FAFAFA',
+        textColor: '#1F2937',
+        headerStyle: 'elegant',
+        buttonStyle: 'rounded',
+        cardStyle: 'shadow',
+        isDefault: true,
+        category: 'wedding',
+        tags: ['elegant', 'classic', 'sophisticated', 'formal'],
+        features: ['Photo Gallery', 'RSVP Form', 'Event Details', 'Guest Messages'],
+        popularity: 95
       },
-      orderBy: [
-        { isDefault: 'desc' },
-        { sortOrder: 'asc' },
-        { name: 'asc' }
-      ]
-    })
-
-    let templates = baseTemplates.map((template: any) => ({
-      id: template.id,
-      name: template.name,
-      displayName: template.displayName,
-      description: template.description,
-      primaryColor: template.primaryColor,
-      secondaryColor: template.secondaryColor,
-      backgroundColor: template.backgroundColor,
-      textColor: template.textColor,
-      headerStyle: template.headerStyle,
-      buttonStyle: template.buttonStyle,
-      cardStyle: template.cardStyle,
-      isDefault: template.isDefault,
-      heroImage: template.heroImage,
-      logoImage: template.logoImage
-    }))
-
-    // If eventId is provided, get event-specific customizations
-    if (eventId) {
-      const event = await prisma.event.findUnique({
-        where: { id: eventId },
-        select: {
-          id: true,
-          templateId: true,
-          customColors: true,
-          customLogo: true,
-          template: true
-        }
-      }) as any // Temporary bypass for TypeScript
-
-      if (event && (event.customColors || event.customStyles)) {
-        // Find the template this event uses and apply customizations
-        const eventTemplateIndex = templates.findIndex(t => t.id === event.templateId)
-        if (eventTemplateIndex !== -1) {
-          const customColors = event.customColors as any
-          const customStyles = event.customStyles as any
-          
-          templates[eventTemplateIndex] = {
-            ...templates[eventTemplateIndex],
-            primaryColor: customColors?.primaryColor || templates[eventTemplateIndex].primaryColor,
-            secondaryColor: customColors?.secondaryColor || templates[eventTemplateIndex].secondaryColor,
-            backgroundColor: customColors?.backgroundColor || templates[eventTemplateIndex].backgroundColor,
-            textColor: customColors?.textColor || templates[eventTemplateIndex].textColor,
-            headerStyle: customStyles?.headerStyle || templates[eventTemplateIndex].headerStyle,
-            buttonStyle: customStyles?.buttonStyle || templates[eventTemplateIndex].buttonStyle,
-            cardStyle: customStyles?.cardStyle || templates[eventTemplateIndex].cardStyle,
-            logoImage: event.customLogo || templates[eventTemplateIndex].logoImage
-          }
-        }
+      {
+        id: 'modern-minimal',
+        name: 'modern-minimal',
+        displayName: 'Modern Minimal',
+        description: 'Sade ve modern tasarım, her türlü etkinlik için uygun',
+        previewImage: 'https://picsum.photos/400/300?random=7',
+        heroImage: 'https://picsum.photos/800/400?random=8',
+        primaryColor: '#10B981',
+        secondaryColor: '#34D399',
+        backgroundColor: '#FFFFFF',
+        textColor: '#111827',
+        headerStyle: 'minimal',
+        buttonStyle: 'square',
+        cardStyle: 'border',
+        category: 'corporate',
+        tags: ['modern', 'minimal', 'clean', 'professional'],
+        features: ['Clean Layout', 'Mobile First', 'Fast Loading', 'SEO Optimized'],
+        popularity: 88,
+        isDefault: false
+      },
+      {
+        id: 'vibrant-party',
+        name: 'vibrant-party',
+        displayName: 'Vibrant Party',
+        description: 'Renkli ve eğlenceli tasarım, doğum günü ve parti etkinlikleri için',
+        previewImage: 'https://picsum.photos/400/300?random=9',
+        heroImage: 'https://picsum.photos/800/400?random=10',
+        primaryColor: '#F59E0B',
+        secondaryColor: '#FBBF24',
+        backgroundColor: '#FEF3C7',
+        textColor: '#92400E',
+        headerStyle: 'playful',
+        buttonStyle: 'rounded',
+        cardStyle: 'colorful',
+        category: 'birthday',
+        tags: ['colorful', 'fun', 'energetic', 'celebration'],
+        features: ['Interactive Elements', 'Animation Effects', 'Social Sharing', 'Music Player'],
+        popularity: 82,
+        isDefault: false
+      },
+      {
+        id: 'luxury-gold',
+        name: 'luxury-gold',
+        displayName: 'Luxury Gold',
+        description: 'Lüks altın temalı tasarım, prestijli etkinlikler için',
+        previewImage: 'https://picsum.photos/400/300?random=11',
+        heroImage: 'https://picsum.photos/800/400?random=12',
+        primaryColor: '#F59E0B',
+        secondaryColor: '#D97706',
+        backgroundColor: '#1F2937',
+        textColor: '#F9FAFB',
+        headerStyle: 'luxury',
+        buttonStyle: 'elegant',
+        cardStyle: 'gold',
+        category: 'corporate',
+        tags: ['luxury', 'premium', 'gold', 'exclusive'],
+        features: ['Premium Design', 'VIP Access', 'Exclusive Content', 'Personal Concierge'],
+        popularity: 76,
+        isDefault: false
+      },
+      {
+        id: 'nature-green',
+        name: 'nature-green',
+        displayName: 'Nature Green',
+        description: 'Doğa temalı yeşil tasarım, açık hava etkinlikleri için',
+        previewImage: 'https://picsum.photos/400/300?random=13',
+        heroImage: 'https://picsum.photos/800/400?random=14',
+        primaryColor: '#059669',
+        secondaryColor: '#10B981',
+        backgroundColor: '#ECFDF5',
+        textColor: '#064E3B',
+        headerStyle: 'natural',
+        buttonStyle: 'organic',
+        cardStyle: 'natural',
+        category: 'other',
+        tags: ['nature', 'green', 'organic', 'outdoor'],
+        features: ['Eco-Friendly', 'Nature Sounds', 'Weather Widget', 'Location Map'],
+        popularity: 71,
+        isDefault: false
+      },
+      {
+        id: 'romantic-pink',
+        name: 'romantic-pink',
+        displayName: 'Romantic Pink',
+        description: 'Romantik pembe tasarım, düğün ve nişan törenleri için',
+        previewImage: 'https://picsum.photos/400/300?random=15',
+        heroImage: 'https://picsum.photos/800/400?random=16',
+        primaryColor: '#EC4899',
+        secondaryColor: '#F472B6',
+        backgroundColor: '#FDF2F8',
+        textColor: '#831843',
+        headerStyle: 'romantic',
+        buttonStyle: 'soft',
+        cardStyle: 'romantic',
+        category: 'wedding',
+        tags: ['romantic', 'pink', 'feminine', 'love'],
+        features: ['Love Story Timeline', 'Couple Gallery', 'Wedding Registry', 'Guest Book'],
+        popularity: 89,
+        isDefault: false
       }
-    }
+    ]
 
-    return NextResponse.json({ 
-      templates,
-      success: true 
-    })
+    return NextResponse.json(templates)
   } catch (error) {
     console.error('Templates API error:', error)
     return NextResponse.json(
       { error: 'Şablonlar yüklenirken hata oluştu' },
-      { status: 500 }
-    )
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const session = await auth()
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const body = await request.json()
-    const {
-      name,
-      displayName,
-      description,
-      primaryColor,
-      secondaryColor,
-      backgroundColor,
-      textColor,
-      headerStyle,
-      buttonStyle,
-      cardStyle,
-      heroImage,
-      logoImage
-    } = body
-
-    // Create new custom template
-    const newTemplate = await prisma.uploadTemplate.create({
-      data: {
-        name: name || `custom_${Date.now()}`,
-        displayName: displayName || 'Özel Şablon',
-        description: description || 'Kullanıcı tarafından oluşturulan özel şablon',
-        primaryColor: primaryColor || '#3B82F6',
-        secondaryColor: secondaryColor || '#8B5CF6',
-        backgroundColor: backgroundColor || '#F8FAFC',
-        textColor: textColor || '#1F2937',
-        headerStyle: headerStyle || 'minimal',
-        buttonStyle: buttonStyle || 'rounded',
-        cardStyle: cardStyle || 'shadow',
-        heroImage,
-        logoImage,
-        isActive: true,
-        isDefault: false,
-        sortOrder: 999
-      }
-    })
-
-    return NextResponse.json({ 
-      template: newTemplate,
-      success: true 
-    })
-  } catch (error) {
-    console.error('Create template error:', error)
-    return NextResponse.json(
-      { error: 'Şablon oluşturulamadı' },
       { status: 500 }
     )
   }
