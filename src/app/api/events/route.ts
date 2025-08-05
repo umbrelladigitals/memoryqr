@@ -73,6 +73,30 @@ export async function POST(request: NextRequest) {
       finalArchiveDate = archiveDate ? new Date(archiveDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     }
 
+    // Parse JSON fields if they are strings
+    let parsedParticipants = null
+    let parsedCustomColors = null
+    
+    try {
+      if (typeof participants === 'string') {
+        parsedParticipants = JSON.parse(participants)
+      } else if (participants) {
+        parsedParticipants = participants
+      }
+    } catch (e) {
+      console.warn('Failed to parse participants:', e)
+    }
+
+    try {
+      if (typeof customColors === 'string') {
+        parsedCustomColors = JSON.parse(customColors)
+      } else if (customColors) {
+        parsedCustomColors = customColors
+      }
+    } catch (e) {
+      console.warn('Failed to parse customColors:', e)
+    }
+
     // Create event
     const event = await prisma.event.create({
       data: {
@@ -83,11 +107,11 @@ export async function POST(request: NextRequest) {
         qrCode: finalQrCode,
         customerId: session.user.id,
         eventType: eventType || null,
-        participants: participants || null,
+        participants: parsedParticipants || undefined,
         maxUploads: maxUploads || null,
         autoArchive: autoArchive || false,
         archiveDate: finalArchiveDate,
-        customColors: customColors || null,
+        customColors: parsedCustomColors || undefined,
         customMessage: customMessage || null,
         bannerImage: bannerImage || null,
         selectedTemplate: selectedTemplate || null,

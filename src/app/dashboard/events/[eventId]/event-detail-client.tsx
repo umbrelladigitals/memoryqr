@@ -437,6 +437,12 @@ export default function EventDetailClient({ event, userId }: EventDetailClientPr
                   >
                     {event.isActive ? 'Pasif Yap' : 'Aktif Yap'}
                   </Button>
+                  <Link href={`/dashboard/events/${event.id}/edit`}>
+                    <Button variant="outline" size="sm">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Etkinlik Düzenle
+                    </Button>
+                  </Link>
                   <Link href={`/dashboard/events/${event.id}/template`}>
                     <Button variant="outline" size="sm">
                       <Users className="h-4 w-4 mr-2" />
@@ -453,6 +459,11 @@ export default function EventDetailClient({ event, userId }: EventDetailClientPr
               )}
               {isMobile && (
                 <div className="flex space-x-1">
+                  <Link href={`/dashboard/events/${event.id}/edit`}>
+                    <Button variant="outline" size="sm" className="px-2">
+                      <Calendar className="h-4 w-4" />
+                    </Button>
+                  </Link>
                   <Link href={`/dashboard/events/${event.id}/template`}>
                     <Button variant="outline" size="sm" className="px-2">
                       <Users className="h-4 w-4" />

@@ -4,6 +4,38 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: NextRequest,
+  { params }: { params: Promise<{ eventId: string }> }
+) {
+  try {
+    const session = await auth()
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { eventId } = await params, NextResponse } from 'next/server'
+iexport async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ eventId: string }> }
+) {
+  try {
+    const session = await auth()
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { eventId } = await paramsfrom '@/auth'
+import { prisma } from '@/lib/prisma'
+
+export async function GET(
+  request: NextRequest,
   { params }: { params: { eventId: string } }
 ) {
   try {
