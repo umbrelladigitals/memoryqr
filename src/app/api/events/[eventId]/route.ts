@@ -16,8 +16,47 @@ export async function GET(
       )
     }
 
-    const { eventId } = await params, NextResponse } from 'next/server'
-iexport async function PUT(
+    const { eventId } = await params
+
+    // Verify event ownership
+    const event = await prisma.event.findUnique({
+      where: { 
+        id: eventId,
+        customerId: session.user.id
+      },
+      include: {
+        customer: true,
+        uploads: {
+          orderBy: {
+            createdAt: 'desc'
+          }
+        },
+        _count: {
+          select: {
+            uploads: true
+          }
+        }
+      }
+    })
+
+    if (!event) {
+      return NextResponse.json(
+        { error: 'Event not found or access denied' },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json({ event })
+  } catch (error) {
+    console.error('Event fetch error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch event' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PUT(
   request: Request,
   { params }: { params: Promise<{ eventId: string }> }
 ) {
@@ -31,77 +70,7 @@ iexport async function PUT(
       )
     }
 
-    const { eventId } = await paramsfrom '@/auth'
-import { prisma } from '@/lib/prisma'
-
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { eventId: string } }
-) {
-  try {
-    const session = await auth()
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { eventId } = params
-
-    const event = await prisma.event.findUnique({
-      where: { id: eventId },
-      include: {
-        template: true,
-        customer: {
-          select: {
-            id: true,
-            name: true,
-            plan: {
-              select: {
-                maxPhotosPerEvent: true
-              }
-            }
-          }
-        }
-      }
-    })
-
-    if (!event) {
-      return NextResponse.json({ error: 'Event not found' }, { status: 404 })
-    }
-
-    // Check if user owns this event
-    if (event.customer.id !== session.user.id) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
-    return NextResponse.json({ 
-      event,
-      success: true 
-    })
-  } catch (error) {
-    console.error('Get event error:', error)
-    return NextResponse.json(
-      { error: 'Event bilgileri alınamadı' },
-      { status: 500 }
-    )
-  }
-}
-
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { eventId: string } }
-) {
-  try {
-    const session = await auth()
-    
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    const { eventId } = params
+    const { eventId } = await params
 
     // Verify event ownership
     const existingEvent = await prisma.event.findUnique({
@@ -132,9 +101,7 @@ export async function PUT(
       selectedTemplate,
       isActive,
       eventType,
-      participants,
-      customLogo,
-      customStyles
+      participants
     } = await request.json()
 
     // Parse archive date
@@ -143,26 +110,48 @@ export async function PUT(
       finalArchiveDate = archiveDate ? new Date(archiveDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     }
 
+    // Parse JSON fields if they are strings
+    let parsedParticipants = null
+    let parsedCustomColors = null
+    
+    try {
+      if (typeof participants === 'string') {
+        parsedParticipants = JSON.parse(participants)
+      } else if (participants) {
+        parsedParticipants = participants
+      }
+    } catch (e) {
+      console.warn('Failed to parse participants:', e)
+    }
+
+    try {
+      if (typeof customColors === 'string') {
+        parsedCustomColors = JSON.parse(customColors)
+      } else if (customColors) {
+        parsedCustomColors = customColors
+      }
+    } catch (e) {
+      console.warn('Failed to parse customColors:', e)
+    }
+
     // Update event
     const updatedEvent = await prisma.event.update({
       where: { id: eventId },
       data: {
-        title,
-        description: description || null,
-        date: new Date(date),
-        location: location || null,
-        eventType: eventType || null,
-        participants: participants || null,
-        maxUploads: maxUploads || null,
-        autoArchive: autoArchive || false,
-        archiveDate: finalArchiveDate,
-        customColors: customColors || null,
-        customMessage: customMessage || null,
-        bannerImage: bannerImage || null,
-        customLogo: customLogo || null,
-        customStyles: customStyles || null,
-        selectedTemplate: selectedTemplate || null,
-        isActive: isActive !== undefined ? isActive : true,
+        title: title || existingEvent.title,
+        description: description !== undefined ? description : existingEvent.description,
+        date: date ? new Date(date) : existingEvent.date,
+        location: location !== undefined ? location : existingEvent.location,
+        eventType: eventType !== undefined ? eventType : existingEvent.eventType,
+        participants: parsedParticipants !== null ? parsedParticipants : (existingEvent.participants as any),
+        maxUploads: maxUploads !== undefined ? maxUploads : existingEvent.maxUploads,
+        autoArchive: autoArchive !== undefined ? autoArchive : existingEvent.autoArchive,
+        archiveDate: finalArchiveDate !== null ? finalArchiveDate : existingEvent.archiveDate,
+        customColors: parsedCustomColors !== null ? parsedCustomColors : (existingEvent.customColors as any),
+        customMessage: customMessage !== undefined ? customMessage : existingEvent.customMessage,
+        bannerImage: bannerImage !== undefined ? bannerImage : existingEvent.bannerImage,
+        selectedTemplate: selectedTemplate !== undefined ? selectedTemplate : existingEvent.selectedTemplate,
+        isActive: isActive !== undefined ? isActive : existingEvent.isActive,
       },
       include: {
         customer: true,
@@ -171,20 +160,12 @@ export async function PUT(
 
     return NextResponse.json({
       message: 'Etkinlik başarıyla güncellendi',
-      event: {
-        id: updatedEvent.id,
-        title: updatedEvent.title,
-        qrCode: updatedEvent.qrCode,
-        date: updatedEvent.date,
-        location: updatedEvent.location,
-        isActive: updatedEvent.isActive,
-        selectedTemplate: updatedEvent.selectedTemplate,
-      }
+      event: updatedEvent
     })
   } catch (error) {
     console.error('Event update error:', error)
     return NextResponse.json(
-      { error: 'Bir hata oluştu' },
+      { error: 'Failed to update event' },
       { status: 500 }
     )
   }
@@ -192,7 +173,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
     const session = await auth()
@@ -204,7 +185,7 @@ export async function DELETE(
       )
     }
 
-    const { eventId } = params
+    const { eventId } = await params
 
     // Verify event ownership
     const existingEvent = await prisma.event.findUnique({
@@ -221,7 +202,7 @@ export async function DELETE(
       )
     }
 
-    // Delete event (uploads will be cascade deleted)
+    // Delete event (cascades to uploads)
     await prisma.event.delete({
       where: { id: eventId }
     })
@@ -230,9 +211,9 @@ export async function DELETE(
       message: 'Etkinlik başarıyla silindi'
     })
   } catch (error) {
-    console.error('Event delete error:', error)
+    console.error('Event deletion error:', error)
     return NextResponse.json(
-      { error: 'Bir hata oluştu' },
+      { error: 'Failed to delete event' },
       { status: 500 }
     )
   }

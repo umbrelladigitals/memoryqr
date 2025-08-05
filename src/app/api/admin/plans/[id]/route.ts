@@ -24,13 +24,14 @@ async function verifyAdminToken(request: NextRequest) {
 // GET - Get single plan
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await verifyAdminToken(request)
+    const resolvedParams = await params
 
     const plan = await prisma.plan.findUnique({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       include: {
         _count: {
           select: {
@@ -59,15 +60,16 @@ export async function GET(
 // PUT - Update plan
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await verifyAdminToken(request)
+    const resolvedParams = await params
 
     const data = await request.json()
 
     const plan = await prisma.plan.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: {
         name: data.name,
         displayName: data.displayName,
@@ -108,44 +110,33 @@ export async function PUT(
 // DELETE - Delete plan
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await verifyAdminToken(request)
+    const resolvedParams = await params
 
-    // Check if plan has customers
-    const planWithCustomers = await prisma.plan.findUnique({
-      where: { id: params.id },
-      include: {
-        _count: {
-          select: {
-            customers: true
-          }
-        }
-      }
+    // Check if plan has any customers
+    const customerCount = await prisma.customer.count({
+      where: { planId: resolvedParams.id }
     })
 
-    if (!planWithCustomers) {
+    if (customerCount > 0) {
       return NextResponse.json(
-        { error: 'Plan not found' },
-        { status: 404 }
-      )
-    }
-
-    if (planWithCustomers._count.customers > 0) {
-      return NextResponse.json(
-        { error: 'Cannot delete plan with active customers' },
+        { error: 'Cannot delete plan with existing customers' },
         { status: 400 }
       )
     }
 
     await prisma.plan.delete({
-      where: { id: params.id }
+      where: { id: resolvedParams.id }
     })
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({
+      message: 'Plan deleted successfully'
+    })
   } catch (error) {
-    console.error('Error deleting plan:', error)
+    console.error('Plan delete error:', error)
     return NextResponse.json(
       { error: 'Failed to delete plan' },
       { status: 500 }
