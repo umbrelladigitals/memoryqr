@@ -1,0 +1,77 @@
+{
+  "name": "MemoryQR - QR Kod ile Etkinlik Fotoğraf Paylaşımı",
+  "short_name": "MemoryQR",
+  "description": "QR kod teknolojisi ile etkinlik fotoğraflarını toplama, düzenleme ve paylaşma platformu",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "tr",
+  "dir": "ltr",
+  "categories": ["business", "productivity", "photo"],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-home.jpg",
+      "sizes": "1280x720",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "Ana Sayfa - Masaüstü"
+    },
+    {
+      "src": "/screenshots/mobile-upload.jpg",
+      "sizes": "360x640",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Fotoğraf Yükleme - Mobil"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Yeni Etkinlik Oluştur",
+      "short_name": "Yeni Etkinlik",
+      "description": "Hızlıca yeni bir etkinlik oluşturun",
+      "url": "/dashboard/events/create",
+      "icons": [{ "src": "/shortcut-create.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Etkinliklerim",
+      "short_name": "Etkinlikler",
+      "description": "Mevcut etkinliklerinizi görüntüleyin",
+      "url": "/dashboard/events",
+      "icons": [{ "src": "/shortcut-events.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": []
+}

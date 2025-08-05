@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # Main Application
+  memoryqr:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:./prod.db
+    volumes:
+      - ./prisma:/app/prisma
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+    depends_on:
+      - redis
+    networks:
+      - memoryqr-network
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - memoryqr-network
+
+  # PostgreSQL (production veritabanı için)
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: memoryqr_prod
+      POSTGRES_USER: memoryqr_user
+      POSTGRES_PASSWORD: your_secure_password_here
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - memoryqr-network
+
+  # Nginx (reverse proxy)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - memoryqr
+    restart: unless-stopped
+    networks:
+      - memoryqr-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  memoryqr-network:
+    driver: bridge
