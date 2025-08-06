@@ -4,12 +4,12 @@ import { jwtVerify } from 'jose'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import AdminLayout from '@/components/admin-layout'
-import PaymentManagementClient from './payment-management-client'
+import PaymentSettingsClient from './payment-settings-client'
 import { Loader2 } from 'lucide-react'
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key')
 
-async function AdminPaymentsPage() {
+async function AdminPaymentSettingsPage() {
   // Check admin authentication
   const cookieStore = await cookies()
   const token = cookieStore.get('adminToken')?.value
@@ -39,14 +39,14 @@ async function AdminPaymentsPage() {
         <Suspense fallback={
           <div className="flex items-center justify-center min-h-96">
             <Loader2 className="h-8 w-8 animate-spin" />
-            <span className="ml-2">Ödeme verileri yükleniyor...</span>
+            <span className="ml-2">Ödeme ayarları yükleniyor...</span>
           </div>
         }>
-          <PaymentManagementClient />
+          <PaymentSettingsClient />
         </Suspense>
       </div>
     </AdminLayout>
   )
 }
 
-export default AdminPaymentsPage
+export default AdminPaymentSettingsPage

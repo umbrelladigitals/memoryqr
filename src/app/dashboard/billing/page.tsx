@@ -58,10 +58,51 @@ export default async function BillingPage() {
 
   const storageUsedGB = totalPhotos * 0.003 // Mock calculation
 
+  // Get payment history with subscription and plan details
+  const payments = await prisma.payment.findMany({
+    where: { customerId: session.user.id },
+    orderBy: { createdAt: 'desc' },
+    take: 10
+  })
+
+  // Get subscription details for each payment
+  const paymentsWithDetails = await Promise.all(
+    payments.map(async (payment) => {
+      if (payment.subscriptionId) {
+        const subscription = await prisma.subscription.findUnique({
+          where: { id: payment.subscriptionId },
+          include: {
+            plan: {
+              select: {
+                displayName: true,
+                name: true
+              }
+            }
+          }
+        })
+        return {
+          ...payment,
+          subscription
+        }
+      }
+      return payment
+    })
+  )
+
+  // Get current subscription
+  const currentSubscription = await prisma.subscription.findUnique({
+    where: { customerId: session.user.id },
+    include: {
+      plan: true
+    }
+  })
+
   return (
     <BillingClient 
       customer={customer}
       allPlans={allPlans}
+      payments={payments}
+      currentSubscription={currentSubscription}
       usage={{
         eventsUsed: totalEvents,
         photosUsed: totalPhotos,

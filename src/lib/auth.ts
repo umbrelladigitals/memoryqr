@@ -19,6 +19,7 @@ export const authConfig: NextAuthConfig = {
           return null
         }
 
+        // Only check customer authentication
         const customer = await prisma.customer.findUnique({
           where: { email: credentials.email as string }
         })
@@ -40,6 +41,7 @@ export const authConfig: NextAuthConfig = {
           id: customer.id,
           email: customer.email,
           name: customer.name,
+          role: 'CUSTOMER'
         }
       }
     })
@@ -55,12 +57,14 @@ export const authConfig: NextAuthConfig = {
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id
+        token.role = (user as any).role
       }
       return token
     },
     async session({ session, token }) {
       if (token.sub) {
         session.user.id = token.sub
+        ;(session.user as any).role = token.role
       }
       return session
     }

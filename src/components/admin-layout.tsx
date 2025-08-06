@@ -73,6 +73,11 @@ const navigation = [
     icon: DollarSign,
   },
   {
+    name: 'Ödeme Yöntemleri',
+    href: '/admin/payments/settings',
+    icon: Settings,
+  },
+  {
     name: 'Analitik',
     href: '/admin/analytics',
     icon: BarChart3,
@@ -80,7 +85,7 @@ const navigation = [
   {
     name: 'Sistem',
     href: '/admin/settings',
-    icon: Settings,
+    icon: Database,
   },
 ]
 
@@ -93,13 +98,12 @@ export default function AdminLayout({ children, user, title, description }: Admi
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
 
-  const handleSignOut = async () => {
+    const handleSignOut = async () => {
     try {
       await fetch('/api/admin/logout', { method: 'POST' })
-      window.location.href = '/admin/auth/signin'
+      window.location.href = '/admin/login'
     } catch (error) {
       console.error('Logout error:', error)
-      window.location.href = '/admin/auth/signin'
     }
   }
 

@@ -1,6 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📸 Snaprella - QR Kod ile Anı Paylaşım Platformu
 
-## Getting Started
+Modern, güvenli ve kolay kullanımlı QR kod tabanlı etkinlik fotoğraf paylaşım platformu.
+
+## 🚀 Özellikler
+
+- **QR Kod ile Kolay Paylaşım**: Misafirler QR kodu tarayarak fotoğraflarını anında yükleyebilir
+- **Modern UI/UX**: Gelişmiş kullanıcı deneyimi ve responsive tasarım
+- **Güvenli Depolama**: Cloudflare R2 entegrasyonu ile güvenli dosya depolama
+- **Real-time Updates**: Canlı fotoğraf güncellemeleri
+- **Template System**: Özelleştirilebilir etkinlik temaları
+- **Admin Panel**: Kapsamlı yönetim paneli
+- **Çoklu Plan Desteği**: Ücretsiz ve premium planlar
+
+## 🛠️ Teknolojiler
+
+- **Frontend**: Next.js 15, React 18, TypeScript
+- **Backend**: Next.js API Routes, Prisma ORM
+- **Database**: SQLite (dev), PostgreSQL (prod)
+- **Authentication**: NextAuth.js
+- **Storage**: Cloudflare R2
+- **Styling**: Tailwind CSS, Shadcn/ui
+- **Deployment**: Vercel Ready
+
+## 🏃‍♂️ Hızlı Başlangıç
+
+### Gereksinimler
+- Node.js 18+
+- pnpm (önerilen) veya npm
+
+### Kurulum
 
 First, run the development server:
 

@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -134,6 +134,7 @@ model Subscription {
   updatedAt     DateTime           @updatedAt
   customer      Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
   plan          Plan               @relation(fields: [planId], references: [id])
+  payments      Payment[]
 
   @@map("subscriptions")
 }
@@ -151,6 +152,7 @@ model Payment {
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   customer       Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
   @@map("payments")
 }
@@ -233,11 +235,11 @@ model SystemSettings {
 model SiteSettings {
   id                    String   @id @default(cuid())
   // General Site Settings
-  siteName              String   @default("MemoryQR")
+  siteName              String   @default("Snaprella")
   siteDescription       String   @default("QR Kod ile Anı Paylaşım Platformu")
-  siteUrl               String   @default("https://memoryqr.com")
-  adminEmail            String   @default("admin@memoryqr.com")
-  supportEmail          String   @default("support@memoryqr.com")
+  siteUrl               String   @default("https://snaprella.com")
+  adminEmail            String   @default("admin@snaprella.com")
+  supportEmail          String   @default("support@snaprella.com")
   timezone              String   @default("Europe/Istanbul")
   language              String   @default("tr")
   currency              String   @default("TRY")
@@ -268,7 +270,7 @@ model SiteSettings {
   smtpUser              String?
   smtpPassword          String?
   smtpSecure            Boolean  @default(true)
-  emailFromName         String   @default("MemoryQR")
+  emailFromName         String   @default("Snaprella")
   emailFromAddress      String?
   
   // Notification Settings
@@ -300,6 +302,34 @@ model SiteSettings {
   updatedAt             DateTime @updatedAt
 
   @@map("site_settings")
+}
+
+model PaymentSettings {
+  id                    String   @id @default("default")
+  // Bank Transfer Settings
+  bankTransferEnabled   Boolean  @default(true)
+  bankName              String   @default("")
+  bankAccountName       String   @default("")
+  bankAccountNumber     String   @default("")
+  bankIban              String   @default("")
+  bankSwiftCode         String   @default("")
+  bankBranch            String   @default("")
+  paymentInstructions   String   @default("Havale/EFT yaparken açıklama kısmına sipariş numaranızı yazınız. Ödemeniz onaylandıktan sonra planınız aktif edilecektir.")
+  
+  // Payment Approval Settings
+  autoApprovalEnabled   Boolean  @default(false)
+  manualApprovalRequired Boolean @default(true)
+  paymentTimeoutHours   Int      @default(24)
+  
+  // Additional Payment Methods
+  creditCardEnabled     Boolean  @default(false)
+  paypalEnabled         Boolean  @default(false)
+  cryptoEnabled         Boolean  @default(false)
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("payment_settings")
 }
 
 enum Role {

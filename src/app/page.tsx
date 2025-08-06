@@ -85,11 +85,13 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <div className="relative">
-              <QrCode className="h-8 w-8 text-blue-600" />
+              <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
+                <Camera className="h-5 w-5 text-white" />
+              </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
             </div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              MemoryQR
+              Snaprella
             </h1>
           </div>
           <nav className="hidden md:flex items-center space-x-8">
@@ -643,11 +645,13 @@ export default function HomePage() {
             <div className="md:col-span-2">
               <div className="flex items-center space-x-2 mb-6">
                 <div className="relative">
-                  <QrCode className="h-8 w-8 text-blue-400" />
+                  <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg">
+                    <Camera className="h-5 w-5 text-white" />
+                  </div>
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                 </div>
                 <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  MemoryQR
+                  Snaprella
                 </h3>
               </div>
               <p className="text-gray-400 text-lg mb-6 max-w-md">
@@ -725,7 +729,7 @@ export default function HomePage() {
           <div className="border-t border-gray-800 py-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div className="text-gray-400 mb-4 md:mb-0">
-                © 2025 MemoryQR. Tüm hakları saklıdır.
+                © 2025 Snaprella. Tüm hakları saklıdır.
               </div>
               <div className="flex items-center space-x-6">
                 <div className="flex items-center space-x-2 text-gray-400">

@@ -1,0 +1,399 @@
+/* Gelişmiş QR Print Tasarımları */
+
+@media print {
+  /* Ana print container */
+  .print-container {
+    width: 100%;
+    height: 100vh;
+    margin: 0;
+    padding: 20mm;
+    background: white;
+    position: relative;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  /* Print sayfa ayarları */
+  @page {
+    size: A4;
+    margin: 0;
+    background: white;
+  }
+
+  /* Düğün teması */
+  .print-wedding {
+    background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 25%, #fecaca 50%, #fda4af 75%, #fb7185 100%);
+    position: relative;
+  }
+
+  .print-wedding::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(circle at 20% 20%, rgba(244, 63, 94, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 40% 70%, rgba(244, 63, 94, 0.06) 0%, transparent 40%);
+    z-index: 1;
+  }
+
+  .print-wedding .decorative-corner {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    z-index: 2;
+  }
+
+  .print-wedding .decorative-corner.top-left {
+    top: 10mm;
+    left: 10mm;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Cg opacity='0.3'%3E%3Ccircle cx='40' cy='40' r='25' fill='%23f43f5e'/%3E%3Cpath d='M25,25 Q40,15 55,25 Q55,40 45,50 Q40,55 35,50 Q25,40 25,25' fill='%23ec4899'/%3E%3C/g%3E%3C/svg%3E") no-repeat center;
+    background-size: contain;
+  }
+
+  .print-wedding .decorative-corner.bottom-right {
+    bottom: 10mm;
+    right: 10mm;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Cg opacity='0.3' transform='rotate(180 40 40)'%3E%3Ccircle cx='40' cy='40' r='25' fill='%23f43f5e'/%3E%3Cpath d='M25,25 Q40,15 55,25 Q55,40 45,50 Q40,55 35,50 Q25,40 25,25' fill='%23ec4899'/%3E%3C/g%3E%3C/svg%3E") no-repeat center;
+    background-size: contain;
+  }
+
+  /* Nişan teması */
+  .print-engagement {
+    background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 25%, #e9d5ff 50%, #d8b4fe 75%, #c084fc 100%);
+    position: relative;
+  }
+
+  .print-engagement::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+      radial-gradient(circle at 30% 30%, rgba(168, 85, 247, 0.12) 0%, transparent 50%),
+      radial-gradient(circle at 70% 70%, rgba(192, 132, 252, 0.08) 0%, transparent 50%);
+    z-index: 1;
+  }
+
+  .print-engagement .decorative-corner {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    z-index: 2;
+  }
+
+  .print-engagement .decorative-corner.top-left {
+    top: 15mm;
+    left: 15mm;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'%3E%3Cg opacity='0.4'%3E%3Cpolygon points='30,5 35,20 50,20 38,30 43,45 30,37 17,45 22,30 10,20 25,20' fill='%23a855f7'/%3E%3Ccircle cx='30' cy='25' r='8' fill='%23c084fc'/%3E%3C/g%3E%3C/svg%3E") no-repeat center;
+    background-size: contain;
+  }
+
+  .print-engagement .decorative-corner.bottom-right {
+    bottom: 15mm;
+    right: 15mm;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'%3E%3Cg opacity='0.4' transform='rotate(180 30 30)'%3E%3Cpolygon points='30,5 35,20 50,20 38,30 43,45 30,37 17,45 22,30 10,20 25,20' fill='%23a855f7'/%3E%3Ccircle cx='30' cy='25' r='8' fill='%23c084fc'/%3E%3C/g%3E%3C/svg%3E") no-repeat center;
+    background-size: contain;
+  }
+
+  /* Doğum günü teması */
+  .print-birthday {
+    background: linear-gradient(135deg, #fefbef 0%, #fef3c7 25%, #fed7aa 50%, #fdba74 75%, #fb923c 100%);
+    position: relative;
+  }
+
+  .print-birthday::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+      radial-gradient(circle at 25% 25%, rgba(249, 115, 22, 0.1) 0%, transparent 40%),
+      radial-gradient(circle at 75% 75%, rgba(251, 191, 36, 0.08) 0%, transparent 40%),
+      radial-gradient(circle at 50% 15%, rgba(251, 146, 60, 0.06) 0%, transparent 30%);
+    z-index: 1;
+  }
+
+  .print-birthday .decorative-corner {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    z-index: 2;
+  }
+
+  .print-birthday .decorative-corner.top-left {
+    top: 12mm;
+    left: 12mm;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Cg opacity='0.3'%3E%3Cellipse cx='35' cy='25' rx='8' ry='15' fill='%23f97316'/%3E%3Cpath d='M35,40 Q32,45 35,50 Q38,45 35,40' stroke='%23f97316' stroke-width='2' fill='none'/%3E%3Ccircle cx='50' cy='15' r='3' fill='%23fbbf24'/%3E%3Ccircle cx='20' cy='55' r='2' fill='%23fb923c'/%3E%3C/g%3E%3C/svg%3E") no-repeat center;
+    background-size: contain;
+  }
+
+  .print-birthday .decorative-corner.bottom-right {
+    bottom: 12mm;
+    right: 12mm;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Cg opacity='0.3' transform='rotate(180 35 35)'%3E%3Cellipse cx='35' cy='25' rx='8' ry='15' fill='%23f97316'/%3E%3Cpath d='M35,40 Q32,45 35,50 Q38,45 35,40' stroke='%23f97316' stroke-width='2' fill='none'/%3E%3Ccircle cx='50' cy='15' r='3' fill='%23fbbf24'/%3E%3Ccircle cx='20' cy='55' r='2' fill='%23fb923c'/%3E%3C/g%3E%3C/svg%3E") no-repeat center;
+    background-size: contain;
+  }
+
+  /* Baby shower teması */
+  .print-baby_shower {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 25%, #bae6fd 50%, #7dd3fc 75%, #38bdf8 100%);
+    position: relative;
+  }
+
+  .print-baby_shower::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(96, 165, 250, 0.06) 0%, transparent 35%);
+    z-index: 1;
+  }
+
+  .print-baby_shower .decorative-corner {
+    position: absolute;
+    width: 65px;
+    height: 65px;
+    z-index: 2;
+  }
+
+  .print-baby_shower .decorative-corner.top-left {
+    top: 15mm;
+    left: 15mm;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 65 65'%3E%3Cg opacity='0.25'%3E%3Cpath d='M32,15 C32,10 27,7 24,11 C21,7 16,10 16,15 C16,20 32,35 32,35 C32,35 48,20 48,15 C48,10 43,7 40,11 C37,7 32,10 32,15' fill='%233b82f6'/%3E%3Cellipse cx='25' cy='50' rx='3' ry='5' fill='%233b82f6'/%3E%3Ccircle cx='23' cy='45' r='1.5' fill='%233b82f6'/%3E%3Ccircle cx='27' cy='45' r='1.5' fill='%233b82f6'/%3E%3C/g%3E%3C/svg%3E") no-repeat center;
+    background-size: contain;
+  }
+
+  .print-baby_shower .decorative-corner.bottom-right {
+    bottom: 15mm;
+    right: 15mm;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 65 65'%3E%3Cg opacity='0.25' transform='rotate(180 32.5 32.5)'%3E%3Cpath d='M32,15 C32,10 27,7 24,11 C21,7 16,10 16,15 C16,20 32,35 32,35 C32,35 48,20 48,15 C48,10 43,7 40,11 C37,7 32,10 32,15' fill='%233b82f6'/%3E%3Cellipse cx='25' cy='50' rx='3' ry='5' fill='%233b82f6'/%3E%3Ccircle cx='23' cy='45' r='1.5' fill='%233b82f6'/%3E%3Ccircle cx='27' cy='45' r='1.5' fill='%233b82f6'/%3E%3C/g%3E%3C/svg%3E") no-repeat center;
+    background-size: contain;
+  }
+
+  /* Kurumsal tema */
+  .print-corporate {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 25%, #e2e8f0 50%, #cbd5e1 75%, #94a3b8 100%);
+    position: relative;
+  }
+
+  .print-corporate::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+      linear-gradient(90deg, rgba(71, 85, 105, 0.03) 1px, transparent 1px),
+      linear-gradient(rgba(71, 85, 105, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+    z-index: 1;
+  }
+
+  .print-corporate .decorative-corner {
+    position: absolute;
+    width: 50px;
+    height: 40px;
+    z-index: 2;
+  }
+
+  .print-corporate .decorative-corner.top-left {
+    top: 20mm;
+    left: 20mm;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 40'%3E%3Cg opacity='0.2'%3E%3Crect x='5' y='5' width='40' height='30' stroke='%23475569' stroke-width='2' fill='rgba(71,85,105,0.05)' rx='3'/%3E%3Crect x='10' y='10' width='6' height='4' fill='%2364748b'/%3E%3Crect x='20' y='10' width='6' height='4' fill='%2364748b'/%3E%3Crect x='30' y='10' width='6' height='4' fill='%2364748b'/%3E%3C/g%3E%3C/svg%3E") no-repeat center;
+    background-size: contain;
+  }
+
+  .print-corporate .decorative-corner.bottom-right {
+    bottom: 20mm;
+    right: 20mm;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 40'%3E%3Cg opacity='0.2' transform='rotate(180 25 20)'%3E%3Crect x='5' y='5' width='40' height='30' stroke='%23475569' stroke-width='2' fill='rgba(71,85,105,0.05)' rx='3'/%3E%3Crect x='10' y='10' width='6' height='4' fill='%2364748b'/%3E%3Crect x='20' y='10' width='6' height='4' fill='%2364748b'/%3E%3Crect x='30' y='10' width='6' height='4' fill='%2364748b'/%3E%3C/g%3E%3C/svg%3E") no-repeat center;
+    background-size: contain;
+  }
+
+  /* Diğer etkinlik teması */
+  .print-other {
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 25%, #e2e8f0 50%, #cbd5e1 75%, #94a3b8 100%);
+    position: relative;
+  }
+
+  .print-other::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+      radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.06) 0%, transparent 40%),
+      radial-gradient(circle at 70% 70%, rgba(129, 140, 248, 0.04) 0%, transparent 35%);
+    z-index: 1;
+  }
+
+  .print-other .decorative-corner {
+    position: absolute;
+    width: 55px;
+    height: 55px;
+    z-index: 2;
+  }
+
+  .print-other .decorative-corner.top-left {
+    top: 18mm;
+    left: 18mm;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 55 55'%3E%3Cg opacity='0.2'%3E%3Cpolygon points='27.5,5 30,18 43,18 33,26 35.5,39 27.5,32 19.5,39 22,26 12,18 25,18' fill='%236366f1'/%3E%3Ccircle cx='27.5' cy='27.5' r='5' fill='%23fbbf24'/%3E%3C/g%3E%3C/svg%3E") no-repeat center;
+    background-size: contain;
+  }
+
+  .print-other .decorative-corner.bottom-right {
+    bottom: 18mm;
+    right: 18mm;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 55 55'%3E%3Cg opacity='0.2' transform='rotate(180 27.5 27.5)'%3E%3Cpolygon points='27.5,5 30,18 43,18 33,26 35.5,39 27.5,32 19.5,39 22,26 12,18 25,18' fill='%236366f1'/%3E%3Ccircle cx='27.5' cy='27.5' r='5' fill='%23fbbf24'/%3E%3C/g%3E%3C/svg%3E") no-repeat center;
+    background-size: contain;
+  }
+
+  /* QR kod merkezi container */
+  .print-qr-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border: 3px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .print-qr-center .qr-code {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    display: inline-block;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .print-event-title {
+    font-size: 28pt;
+    font-weight: bold;
+    margin: 20px 0 10px 0;
+    color: #1a1a1a;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  .print-event-subtitle {
+    font-size: 16pt;
+    color: #4a4a4a;
+    margin-bottom: 15px;
+  }
+
+  .print-instructions {
+    font-size: 14pt;
+    color: #666;
+    line-height: 1.6;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  /* Print için gizle */
+  .no-print {
+    display: none !important;
+  }
+
+  /* Sayfanın geri kalanını gizle */
+  body * {
+    visibility: hidden;
+  }
+
+  .print-container,
+  .print-container * {
+    visibility: visible;
+  }
+
+  .print-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+}
+
+/* Genel süsleme elementleri */
+.decorative-elements {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.floating-element {
+  position: absolute;
+  font-size: 24px;
+  opacity: 0.15;
+  animation: float 6s ease-in-out infinite;
+}
+
+.floating-element:nth-child(2n) {
+  animation-delay: -2s;
+}
+
+.floating-element:nth-child(3n) {
+  animation-delay: -4s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-10px) rotate(5deg); }
+  66% { transform: translateY(5px) rotate(-3deg); }
+}
+
+/* Çerçeve efektleri */
+.decorative-border {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid transparent;
+  border-radius: 20px;
+  z-index: 3;
+}
+
+.print-wedding .decorative-border {
+  border-image: linear-gradient(45deg, #f43f5e 0%, #ec4899 50%, #f43f5e 100%) 1;
+}
+
+.print-engagement .decorative-border {
+  border-image: linear-gradient(45deg, #a855f7 0%, #c084fc 50%, #a855f7 100%) 1;
+}
+
+.print-birthday .decorative-border {
+  border-image: linear-gradient(45deg, #f97316 0%, #fbbf24 50%, #f97316 100%) 1;
+}
+
+.print-baby_shower .decorative-border {
+  border-image: linear-gradient(45deg, #3b82f6 0%, #60a5fa 50%, #3b82f6 100%) 1;
+}
+
+.print-corporate .decorative-border {
+  border-image: linear-gradient(45deg, #475569 0%, #64748b 50%, #475569 100%) 1;
+}
+
+.print-other .decorative-border {
+  border-image: linear-gradient(45deg, #6366f1 0%, #818cf8 50%, #6366f1 100%) 1;
+}

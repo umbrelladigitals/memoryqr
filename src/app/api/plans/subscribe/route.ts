@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { planId } = await request.json()
+    const { planId, paymentMethod = 'BANK_TRANSFER' } = await request.json()
 
     if (!planId) {
       return NextResponse.json(
@@ -34,60 +34,109 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Update customer's plan
-    const updatedCustomer = await prisma.customer.update({
-      where: { id: session.user.id },
-      data: { planId },
-      include: {
-        plan: true
-      }
+    // Get payment settings
+    const paymentSettings = await prisma.paymentSettings.findUnique({
+      where: { id: 'default' }
     })
 
-    // Create subscription record if it's a paid plan
-    if (plan.price > 0) {
-      await prisma.subscription.upsert({
-        where: { customerId: session.user.id },
-        update: {
-          planId,
-          status: 'ACTIVE',
-          currentPeriodStart: new Date(),
-          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        },
-        create: {
-          customerId: session.user.id,
-          planId,
-          status: 'ACTIVE',
-          currentPeriodStart: new Date(),
-          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        }
+    // If it's a free plan, activate immediately
+    if (plan.price === 0) {
+      const updatedCustomer = await prisma.customer.update({
+        where: { id: session.user.id },
+        data: { planId },
+        include: { plan: true }
       })
 
-      // Create payment record
-      await prisma.payment.create({
-        data: {
-          customerId: session.user.id,
-          planId,
-          amount: plan.price,
-          currency: plan.currency,
-          status: 'COMPLETED',
-          paymentMethod: 'CREDIT_CARD', // This would come from actual payment processor
-          transactionId: `tx_${Date.now()}`, // This would come from actual payment processor
-        }
+      return NextResponse.json({
+        message: 'Ücretsiz plan başarıyla aktif edildi',
+        customer: {
+          id: updatedCustomer.id,
+          planId: updatedCustomer.planId,
+          plan: updatedCustomer.plan
+        },
+        paymentRequired: false
       })
     }
 
-    return NextResponse.json({
-      message: 'Plan başarıyla güncellendi',
-      customer: {
-        id: updatedCustomer.id,
-        planId: updatedCustomer.planId,
-        plan: updatedCustomer.plan
+    // For paid plans, check payment method availability
+    if (paymentMethod === 'BANK_TRANSFER' && (!paymentSettings?.bankTransferEnabled)) {
+      return NextResponse.json(
+        { error: 'Havale/EFT ödemeleri şu anda kullanılamıyor' },
+        { status: 400 }
+      )
+    }
+
+    // Create pending subscription
+    const subscription = await prisma.subscription.upsert({
+      where: { customerId: session.user.id },
+      update: {
+        planId,
+        status: 'PAST_DUE', // Pending payment
+        startDate: new Date(),
+        endDate: null, // Will be set after payment
+        price: plan.price,
+        currency: plan.currency,
+        paymentMethod,
+      },
+      create: {
+        customerId: session.user.id,
+        planId,
+        status: 'PAST_DUE', // Pending payment
+        startDate: new Date(),
+        endDate: null, // Will be set after payment
+        price: plan.price,
+        currency: plan.currency,
+        paymentMethod,
       }
+    })
+
+    // Create pending payment record
+    const payment = await prisma.payment.create({
+      data: {
+        customerId: session.user.id,
+        subscriptionId: subscription.id,
+        amount: plan.price,
+        currency: plan.currency,
+        status: 'PENDING',
+        paymentMethod,
+        description: `${plan.displayName} planı aboneliği`,
+      }
+    })
+
+    // Don't update customer's plan yet - wait for payment confirmation
+    const customer = await prisma.customer.findUnique({
+      where: { id: session.user.id },
+      include: { plan: true }
+    })
+
+    return NextResponse.json({
+      message: 'Ödeme bekleyen abonelik oluşturuldu',
+      customer,
+      subscription,
+      payment: {
+        id: payment.id,
+        amount: payment.amount,
+        currency: payment.currency,
+        status: payment.status,
+        paymentMethod: payment.paymentMethod,
+      },
+      paymentRequired: true,
+      paymentInfo: paymentMethod === 'BANK_TRANSFER' ? {
+        bankName: paymentSettings?.bankName,
+        bankAccountName: paymentSettings?.bankAccountName,
+        bankAccountNumber: paymentSettings?.bankAccountNumber,
+        bankIban: paymentSettings?.bankIban,
+        bankSwiftCode: paymentSettings?.bankSwiftCode,
+        bankBranch: paymentSettings?.bankBranch,
+        instructions: paymentSettings?.paymentInstructions,
+        paymentId: payment.id,
+        timeoutHours: paymentSettings?.paymentTimeoutHours || 24,
+      } : null
     })
   } catch (error) {
     console.error('Plan subscription error:', error)
     return NextResponse.json(
-      { error: 'Plan güncellenirken hata oluştu' },
+      { error: 'Plan aboneliği oluşturulurken hata oluştu' },
       { status: 500 }
     )
   }

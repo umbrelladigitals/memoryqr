@@ -15,7 +15,8 @@ import {
   LogOut,
   Download,
   Menu,
-  X
+  X,
+  CreditCard
 } from 'lucide-react'
 
 interface DashboardNavbarProps {
@@ -43,25 +44,31 @@ export default function DashboardNavbar({ user }: DashboardNavbarProps) {
       name: 'Etkinlikler',
       href: '/dashboard/events',
       icon: Calendar,
-      current: pathname.startsWith('/dashboard/events')
+      current: pathname?.startsWith('/dashboard/events') || false
     },
     {
       name: 'Analytics',
       href: '/dashboard/analytics',
       icon: BarChart3,
-      current: pathname.startsWith('/dashboard/analytics')
+      current: pathname?.startsWith('/dashboard/analytics') || false
+    },
+    {
+      name: 'Plan & Faturalandırma',
+      href: '/dashboard/billing',
+      icon: CreditCard,
+      current: pathname?.startsWith('/dashboard/billing') || false
     },
     {
       name: 'İndirmeler',
       href: '/dashboard/downloads',
       icon: Download,
-      current: pathname.startsWith('/dashboard/downloads')
+      current: pathname?.startsWith('/dashboard/downloads') || false
     },
     {
       name: 'Ayarlar',
       href: '/dashboard/settings',
       icon: Settings,
-      current: pathname.startsWith('/dashboard/settings')
+      current: pathname?.startsWith('/dashboard/settings') || false
     }
   ]
 

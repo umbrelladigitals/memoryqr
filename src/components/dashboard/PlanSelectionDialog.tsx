@@ -35,7 +35,7 @@ interface Plan {
 export default function PlanSelectionDialog() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const selectPlanId = searchParams.get('selectPlan')
+  const selectPlanId = searchParams?.get('selectPlan')
   
   const [isOpen, setIsOpen] = useState(!!selectPlanId)
   const [plans, setPlans] = useState<Plan[]>([])
@@ -79,21 +79,45 @@ export default function PlanSelectionDialog() {
       const response = await fetch('/api/plans/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId: selectedPlan.id })
+        body: JSON.stringify({ 
+          planId: selectedPlan.id,
+          paymentMethod: 'BANK_TRANSFER'
+        })
       })
 
-      if (response.ok) {
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Plan aboneliği başarısız')
+      }
+
+      if (data.paymentRequired) {
+        // Ödeme gerekli - havale bilgilerini göster
+        toast.success('Plan aboneliği oluşturuldu!', {
+          description: 'Ödeme bilgileri sayfasına yönlendiriliyorsunuz...',
+        })
+        
+        // Payment bilgilerini localStorage'a kaydet
+        localStorage.setItem('pendingPayment', JSON.stringify({
+          paymentId: data.payment.id,
+          amount: data.payment.amount,
+          currency: data.payment.currency,
+          paymentInfo: data.paymentInfo
+        }))
+        
+        setIsOpen(false)
+        // Ödeme sayfasına yönlendir
+        router.push('/dashboard/billing/payment')
+      } else {
+        // Ücretsiz plan - direkt aktif
         toast.success(`${selectedPlan.displayName} planına başarıyla geçildi!`)
         setIsOpen(false)
         router.push('/dashboard')
         router.refresh()
-      } else {
-        const error = await response.json()
-        toast.error(error.error || 'Plan değişikliğinde hata oluştu')
       }
     } catch (error) {
       console.error('Subscription error:', error)
-      toast.error('Bir hata oluştu')
+      toast.error(error instanceof Error ? error.message : 'Plan aboneliği başarısız')
     } finally {
       setSubscribing(false)
     }

@@ -22,6 +22,7 @@ import {
   Building
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { eventTypeConfig } from '@/lib/eventTypeConfig'
 
 interface Template {
   id: string
@@ -50,13 +51,7 @@ export default function CreateEventDialog({ isOpen, onClose, customerId }: Creat
     customLogo: '',
     bannerImage: '',
     eventType: '',
-    participants: {
-      bride: '',
-      groom: '',
-      celebrant: '',
-      organizer: '',
-      parents: ''
-    }
+    participants: {}
   })
   const router = useRouter()
 
@@ -128,13 +123,7 @@ export default function CreateEventDialog({ isOpen, onClose, customerId }: Creat
           customLogo: '',
           bannerImage: '',
           eventType: '',
-          participants: {
-            bride: '',
-            groom: '',
-            celebrant: '',
-            organizer: '',
-            parents: ''
-          }
+          participants: {}
         })
         router.refresh()
       } else {
@@ -323,73 +312,40 @@ export default function CreateEventDialog({ isOpen, onClose, customerId }: Creat
           {/* Participants based on event type */}
           {formData.templateId && (
             <div className="space-y-2">
-              <Label>Katılımcı Bilgileri</Label>
+              <Label>Özel Bilgiler</Label>
               {(() => {
                 const selectedTemplate = templates.find(t => t.id === formData.templateId);
-                const templateName = selectedTemplate?.name;
-
-                if (templateName === 'wedding' || templateName === 'engagement') {
-                  return (
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <Input
-                          placeholder="Gelin adı"
-                          value={formData.participants.bride}
-                          onChange={(e) => setFormData(prev => ({
-                            ...prev,
-                            participants: { ...prev.participants, bride: e.target.value }
-                          }))}
-                        />
-                      </div>
-                      <div>
-                        <Input
-                          placeholder="Damat adı"
-                          value={formData.participants.groom}
-                          onChange={(e) => setFormData(prev => ({
-                            ...prev,
-                            participants: { ...prev.participants, groom: e.target.value }
-                          }))}
-                        />
-                      </div>
-                    </div>
-                  );
-                } else if (templateName === 'birthday') {
-                  return (
-                    <Input
-                      placeholder="Doğum günü sahibi"
-                      value={formData.participants.celebrant}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        participants: { ...prev.participants, celebrant: e.target.value }
-                      }))}
-                    />
-                  );
-                } else if (templateName === 'baby_shower') {
-                  return (
-                    <Input
-                      placeholder="Anne & Baba adı"
-                      value={formData.participants.parents}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        participants: { ...prev.participants, parents: e.target.value }
-                      }))}
-                    />
-                  );
-                } else {
-                  return (
-                    <Input
-                      placeholder="Etkinlik organizatörü"
-                      value={formData.participants.organizer}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        participants: { ...prev.participants, organizer: e.target.value }
-                      }))}
-                    />
-                  );
+                const templateName = selectedTemplate?.name as keyof typeof eventTypeConfig;
+                const eventConfig = eventTypeConfig[templateName];
+                
+                if (!eventConfig || !eventConfig.specialFields) {
+                  return null;
                 }
+
+                return (
+                  <div className="space-y-3">
+                    {eventConfig.specialFields.map((field) => (
+                      <div key={field.key} className="space-y-1">
+                        <Label className="text-sm flex items-center gap-2">
+                          <span>{field.icon}</span>
+                          {field.label}
+                        </Label>
+                        <Input
+                          placeholder={field.label}
+                          value={formData.participants[field.key] || ''}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            participants: { ...prev.participants, [field.key]: e.target.value }
+                          }))}
+                          className="text-sm"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                );
               })()}
               <p className="text-xs text-gray-500">
-                Bu bilgiler QR kod kartlarında görünecektir.
+                Bu bilgiler QR kod kartlarında özel tasarımla görünecektir.
               </p>
             </div>
           )}

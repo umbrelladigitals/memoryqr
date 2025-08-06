@@ -20,14 +20,14 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://memoryqr.com'),
+  metadataBase: new URL('https://snaprella.com'),
   title: {
-    default: "MemoryQR - QR Kod ile Etkinlik Fotoğraf Paylaşımı",
-    template: "%s | MemoryQR"
+    default: "Snaprella - QR Kod ile Etkinlik Fotoğraf Paylaşımı",
+    template: "%s | Snaprella"
   },
   description: "QR kod teknolojisi ile etkinlik fotoğraflarını toplama, düzenleme ve paylaşma konusunda Türkiye'nin en yenilikçi platformu. Düğün, doğum günü, kurumsal etkinlikler için profesyonel çözüm.",
   keywords: ["QR kod", "etkinlik fotoğrafları", "fotoğraf paylaşımı", "düğün fotoğrafları", "etkinlik yönetimi", "dijital fotoğraf albümü", "misafir fotoğrafları"],
-  authors: [{ name: "MemoryQR Team" }],
+  authors: [{ name: "Snaprella Team" }],
   creator: "MemoryQR",
   publisher: "MemoryQR",
   applicationName: "MemoryQR",

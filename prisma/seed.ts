@@ -126,6 +126,19 @@ async function main() {
       isActive: true,
       autoArchive: true,
       archiveDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      eventType: 'wedding',
+      participants: JSON.stringify({
+        bride: 'Ayşe Yılmaz',
+        groom: 'Mehmet Kaya',
+        guests: ['Ali Demir', 'Fatma Şahin', 'Ahmet Çelik']
+      }),
+      customColors: JSON.stringify({
+        primary: '#DC2626',
+        secondary: '#F59E0B',
+        background: '#FEF7F0'
+      }),
+      selectedTemplate: 'wedding',
+      customMessage: 'Mutlu günümüzü bizimle paylaşın!'
     }
   })
 
@@ -172,6 +185,19 @@ async function main() {
       isActive: true,
       autoArchive: true,
       archiveDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
+      eventType: 'corporate',
+      participants: JSON.stringify({
+        organizer: 'Tech Corp Ltd.',
+        speakers: ['Dr. Ahmet Yılmaz', 'Prof. Elif Demir'],
+        attendees: 150
+      }),
+      customColors: JSON.stringify({
+        primary: '#1D4ED8',
+        secondary: '#4F46E5',
+        background: '#F8FAFC'
+      }),
+      selectedTemplate: 'corporate',
+      customMessage: 'Şirketimizin başarı hikayesini keşfedin!'
     }
   })
 
@@ -186,6 +212,20 @@ async function main() {
       isActive: true,
       autoArchive: true,
       archiveDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+      eventType: 'conference',
+      participants: JSON.stringify({
+        keynote: 'Elon Musk',
+        sponsors: ['Google', 'Microsoft', 'Amazon'],
+        expectedAttendees: 500
+      }),
+      customColors: JSON.stringify({
+        primary: '#059669',
+        secondary: '#0D9488',
+        background: '#F0FDF4'
+      }),
+      selectedTemplate: 'corporate',
+      maxUploads: 1000,
+      customMessage: 'Teknolojinin geleceğini birlikte şekillendiriyoruz!'
     }
   })
 
@@ -202,6 +242,8 @@ async function main() {
       thumbnailPath: '/uploads/wedding/thumb-1.jpg',
       guestName: 'John Doe',
       eventId: event.id,
+      likes: 5,
+      metadata: JSON.stringify({ camera: 'iPhone 14 Pro', location: 'Istanbul' })
     },
     {
       fileName: 'wedding-photo-2.jpg',
@@ -212,6 +254,20 @@ async function main() {
       thumbnailPath: '/uploads/wedding/thumb-2.jpg',
       guestName: 'Jane Smith',
       eventId: event.id,
+      likes: 12,
+      metadata: JSON.stringify({ camera: 'Canon EOS R5', professional: true })
+    },
+    {
+      fileName: 'wedding-video-1.mp4',
+      originalName: 'first-dance.mp4',
+      fileSize: 15360000,
+      mimeType: 'video/mp4',
+      filePath: '/uploads/wedding/video-1.mp4',
+      thumbnailPath: '/uploads/wedding/video-thumb-1.jpg',
+      guestName: 'Michael Johnson',
+      eventId: event.id,
+      likes: 8,
+      metadata: JSON.stringify({ duration: 120, resolution: '1080p' })
     },
     {
       fileName: 'corporate-photo-1.jpg',
@@ -220,8 +276,22 @@ async function main() {
       mimeType: 'image/jpeg',
       filePath: '/uploads/corporate/photo-1.jpg',
       thumbnailPath: '/uploads/corporate/thumb-1.jpg',
-      guestName: 'Mike Johnson',
+      guestName: 'Sarah Wilson',
       eventId: proEvent.id,
+      likes: 3,
+      metadata: JSON.stringify({ group: 'Marketing Team', department: 'Sales' })
+    },
+    {
+      fileName: 'conference-photo-1.jpg',
+      originalName: 'keynote-speech.jpg',
+      fileSize: 2560000,
+      mimeType: 'image/jpeg',
+      filePath: '/uploads/conference/photo-1.jpg',
+      thumbnailPath: '/uploads/conference/thumb-1.jpg',
+      guestName: 'Tech Attendee',
+      eventId: enterpriseEvent.id,
+      likes: 25,
+      metadata: JSON.stringify({ speaker: 'Elon Musk', session: 'Keynote' })
     }
   ]
 
@@ -431,6 +501,26 @@ async function main() {
     console.log('⚠️ System settings already exist or error:', error)
   }
 
+  // Create default payment settings
+  try {
+    await prisma.$executeRaw`
+      INSERT OR REPLACE INTO payment_settings (
+        id, bankTransferEnabled, bankName, bankAccountName, bankAccountNumber,
+        bankIban, bankSwiftCode, bankBranch, paymentInstructions,
+        autoApprovalEnabled, manualApprovalRequired, paymentTimeoutHours,
+        creditCardEnabled, paypalEnabled, cryptoEnabled, createdAt, updatedAt
+      ) VALUES (
+        'default', 1, 'Türkiye İş Bankası', 'Snaprella Teknoloji Ltd. Şti.',
+        '1234-5678-9012-3456', 'TR33 0006 4000 0011 2345 6789 01', 'ISBKTRIS',
+        'Kadıköy Şubesi', 'Havale/EFT yaparken açıklama kısmına sipariş numaranızı yazınız. Ödemeniz onaylandıktan sonra planınız aktif edilecektir.',
+        0, 1, 24, 0, 0, 0, datetime('now'), datetime('now')
+      )
+    `
+    console.log('✅ Payment settings created')
+  } catch (error) {
+    console.log('⚠️ Payment settings already exist or error:', error)
+  }
+
   // Create default site settings
   try {
     await prisma.$executeRaw`
@@ -441,10 +531,10 @@ async function main() {
         pushNotifications, userRegistration, emailVerification, socialLogin,
         maintenanceMode, emailFromName, createdAt, updatedAt
       ) VALUES (
-        'default', 'MemoryQR Paylaşım Platformu', 'QR kod ile anı paylaşım platformu - Modern, güvenli ve kolay kullanım',
-        'http://localhost:3000', 'admin@memoryqr.com', 'support@memoryqr.com',
+        'default', 'Snaprella Paylaşım Platformu', 'QR kod ile anı paylaşım platformu - Modern, güvenli ve kolay kullanım',
+        'http://localhost:3000', 'admin@snaprella.com', 'support@snaprella.com',
         'Europe/Istanbul', 'tr', 'TRY', '#3B82F6', '#10B981', '#F59E0B',
-        '#FFFFFF', '#1F2937', 1, 0, 1, 1, 1, 1, 0, 'MemoryQR',
+        '#FFFFFF', '#1F2937', 1, 0, 1, 1, 1, 1, 0, 'Snaprella',
         datetime('now'), datetime('now')
       )
     `
